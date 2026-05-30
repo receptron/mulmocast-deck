@@ -60,12 +60,17 @@ export const textBlockSchema = z.object({
 /** Sub-bullet item: plain string or object with text */
 const subBulletItemSchema = z.union([z.string(), z.object({ text: z.string() })]);
 
-/** Bullet item: plain string or object with text and optional sub-items (2 levels max) */
+/** Status-icon variants for bullets (renders ✓ / ✕ / ⚠ in the accent color of the variant). */
+export const bulletIconSchema = z.enum(["ok", "no", "warn"]);
+
+/** Bullet item: plain string, or object with text + optional sub-items + optional status icon. */
 export const bulletItemSchema = z.union([
   z.string(),
   z.object({
     text: z.string(),
     items: z.array(subBulletItemSchema).optional(),
+    /** Optional status icon shown in place of the default bullet marker ("ok" → ✓, "no" → ✕, "warn" → ⚠). */
+    icon: bulletIconSchema.optional(),
   }),
 ]);
 
@@ -335,6 +340,8 @@ export const timelineItemSchema = z.object({
   description: z.string().optional(),
   color: accentColorKeySchema.optional(),
   done: z.boolean().optional(),
+  /** Optional emphasis flag — when true the step is rendered with a stronger accent border and tinted background. */
+  hot: z.boolean().optional(),
 });
 
 export const timelineSlideSchema = z.object({
@@ -450,6 +457,31 @@ export const funnelSlideSchema = z.object({
   callout: calloutBarSchema.optional(),
 });
 
+// ─── manifesto ───
+/** A single line in a manifesto / creed grid. */
+export const manifestoLineSchema = z.object({
+  title: z.string(),
+  description: z.string().optional(),
+  /** Accent color for the line's left-border highlight. Falls back to slide.accentColor / "primary". */
+  accentColor: accentColorKeySchema.optional(),
+});
+
+/**
+ * Grid of short bordered cards, each with a colored left accent — useful for manifestos,
+ * principles, "what we believe" lists, etc.
+ */
+export const manifestoSlideSchema = z.object({
+  layout: z.literal("manifesto"),
+  ...slideBaseFields,
+  title: z.string(),
+  stepLabel: z.string().optional(),
+  subtitle: z.string().optional(),
+  items: z.array(manifestoLineSchema),
+  /** Number of grid columns (default: 2). */
+  columns: z.number().int().min(1).max(4).optional(),
+  callout: calloutBarSchema.optional(),
+});
+
 // ═══════════════════════════════════════════════════════════
 // Branding — logo & background image overlay
 // ═══════════════════════════════════════════════════════════
@@ -503,6 +535,7 @@ export const slideLayoutSchema = z.discriminatedUnion("layout", [
   tableSlideSchema,
   funnelSlideSchema,
   waterfallSlideSchema,
+  manifestoSlideSchema,
 ]);
 
 /** Media schema registered in mulmoImageAssetSchema */
@@ -563,6 +596,9 @@ export type FunnelStage = z.infer<typeof funnelStageSchema>;
 export type FunnelSlide = z.infer<typeof funnelSlideSchema>;
 export type WaterfallItem = z.infer<typeof waterfallItemSchema>;
 export type WaterfallSlide = z.infer<typeof waterfallSlideSchema>;
+export type ManifestoLine = z.infer<typeof manifestoLineSchema>;
+export type ManifestoSlide = z.infer<typeof manifestoSlideSchema>;
+export type BulletIcon = z.infer<typeof bulletIconSchema>;
 export type SlideBrandingLogo = z.infer<typeof slideBrandingLogoSchema>;
 export type SlideBranding = z.infer<typeof slideBrandingSchema>;
 export type MulmoSlideMedia = z.infer<typeof mulmoSlideMediaSchema>;
