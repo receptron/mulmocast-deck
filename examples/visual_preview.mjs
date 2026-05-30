@@ -1,4 +1,4 @@
-// Visual preview generator for Phase 1 theme extensions.
+// Visual preview generator for the deck DSL.
 // Run: `yarn build && node examples/visual_preview.mjs`
 // Output: examples/out/*.html — open in a browser to inspect.
 
@@ -45,12 +45,10 @@ const lightColors = {
 };
 
 const themes = {
-  // Existing-style theme (no new fields) — sanity check that nothing regresses
   classic_light: {
     colors: lightColors,
     fonts: { title: "Georgia", body: "Calibri", mono: "Consolas" },
   },
-  // New: dark navy with multi-layer gradient bg, title-gradient text, Outfit accent font
   dark_studio: {
     colors: baseColors,
     fonts: {
@@ -63,54 +61,69 @@ const themes = {
       "radial-gradient(1200px 700px at 12% -10%, rgba(56,189,248,.16), transparent 60%), radial-gradient(1000px 600px at 100% 0%, rgba(129,140,248,.16), transparent 55%), linear-gradient(160deg, #0A0F24, #111A3A 55%, #16224D)",
     titleGradient: "linear-gradient(100deg, #FFFFFF, #38BDF8 60%, #818CF8)",
   },
-  // bg gradient only (no title gradient) — verify partial adoption works
-  dark_studio_bg_only: {
-    colors: baseColors,
-    fonts: { title: "'Noto Sans JP', system-ui, sans-serif", body: "'Noto Sans JP', system-ui, sans-serif", mono: "Consolas" },
-    bgGradient: "linear-gradient(160deg, #0A0F24, #16224D)",
-  },
 };
 
-const slides = [
-  {
+const slides = {
+  // Phase 1: gradient title + chips row
+  title_with_chips: {
     layout: "title",
-    title: "Phase 1 Preview",
-    subtitle: "Theme gradients + accent font",
+    eyebrow: { label: "Singularity Society · 4th BootCamp" },
+    title: "第4回 BootCamp\nキックオフ",
+    subtitle: "半年〜1年、手を動かし続ける旅のはじまり。",
+    author: "2026.06.13-14 · 東京 · オフライン",
+    chips: ["🚀 deploy or die", "🔁 ドッグフーディング", "⚡ 週1アウトプット", "🤝 相互フィードバック"],
   },
-  {
+  // Phase 2: numLabel in stats + eyebrow
+  stats_with_numbers: {
     layout: "stats",
-    title: "Quarterly Highlights",
+    eyebrow: { label: "Highlights", color: "primary" },
+    title: "Quarterly Snapshot",
     subtitle: "FY2026 Q1",
     stats: [
-      { value: "+42%", label: "Revenue YoY", color: "success" },
-      { value: "1.8M", label: "Active Users", color: "primary" },
-      { value: "4.6", label: "Avg NPS", color: "info" },
-      { value: "98%", label: "Uptime", color: "accent" },
+      { numLabel: "01", value: "+42%", label: "Revenue YoY", color: "success" },
+      { numLabel: "02", value: "1.8M", label: "Active Users", color: "primary" },
+      { numLabel: "03", value: "4.6", label: "Avg NPS", color: "info" },
+      { numLabel: "04", value: "98%", label: "Uptime", color: "accent" },
     ],
   },
-  {
-    layout: "comparison",
-    title: "Before vs After",
-    left: { title: "Before", accentColor: "danger", content: [{ type: "bullets", items: ["Slow CI", "Manual deploys", "No alerts"] }] },
-    right: { title: "After", accentColor: "success", content: [{ type: "bullets", items: ["Fast CI", "One-click deploys", "Live alerts"] }] },
+  // Phase 2: numLabel in columns
+  columns_agenda: {
+    layout: "columns",
+    eyebrow: { label: "Agenda" },
+    title: "今日話すこと",
+    columns: [
+      { numLabel: "01", title: "原点・なぜ今・行動哲学", content: [{ type: "text", value: "BootCamp が大事にしている姿勢" }] },
+      { numLabel: "02", title: "ドッグフーディング & つくり方", content: [{ type: "text", value: "何を、どう作るか" }] },
+      { numLabel: "03", title: "4つのコース", content: [{ type: "text", value: "あなたはどこで走るか" }] },
+      { numLabel: "04", title: "全体の流れ", content: [{ type: "text", value: "キックオフ → 中間 → 最終" }] },
+    ],
   },
-  {
+  // Eyebrow with custom color (amber for warning section)
+  comparison_amber: {
+    layout: "comparison",
+    eyebrow: { label: "🔁 最重要ポリシー", color: "warning" },
+    title: "ドッグフーディング",
+    left: { title: "やる", accentColor: "success", content: [{ type: "bullets", items: ["自分が日常で使う", "失敗の回数だけ進化"] }] },
+    right: { title: "やらない", accentColor: "danger", content: [{ type: "bullets", items: ["条件付きの意見", "完成までの議論"] }] },
+  },
+  // Eyebrow on bigQuote
+  big_quote_with_eyebrow: {
     layout: "bigQuote",
+    eyebrow: { label: "Let's go" },
     quote: "100の議論より、1つ作って試す。",
     author: "deploy or die.",
   },
-];
+};
 
 let count = 0;
 for (const [themeName, theme] of Object.entries(themes)) {
-  for (let i = 0; i < slides.length; i++) {
-    const slide = slides[i];
+  for (const [slideKey, slide] of Object.entries(slides)) {
     const html = generateSlideHTML(theme, slide);
-    const filename = `${themeName}__${String(i + 1).padStart(2, "0")}_${slide.layout}.html`;
+    const filename = `${themeName}__${slideKey}.html`;
     fs.writeFileSync(path.join(outDir, filename), html);
     count++;
   }
 }
 
 console.log(`Wrote ${count} HTML files to ${outDir}`);
-console.log(`Open in a browser, e.g.:  open ${outDir}/dark_studio__01_title.html`);
+console.log(`Open in a browser, e.g.:  open ${outDir}/dark_studio__title_with_chips.html`);

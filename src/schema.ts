@@ -198,6 +198,8 @@ export const cardSchema = z.object({
   footer: z.string().optional(),
   label: z.string().optional(),
   num: z.number().optional(),
+  /** Optional accent-colored typographic prefix before the card title (e.g. "01", "Ⅱ", "★"). */
+  numLabel: z.string().optional(),
   icon: z.string().optional(),
 });
 
@@ -214,10 +216,19 @@ export const slideStyleSchema = z.object({
   footer: z.string().optional(),
 });
 
+/** Optional kicker/category label rendered at the top of a slide (small uppercase pill). */
+export const eyebrowSchema = z.object({
+  label: z.string(),
+  /** Color token (e.g. "primary", "amber", "success"). Falls back to slide.accentColor / theme primary when absent. */
+  color: accentColorKeySchema.optional(),
+});
+
 /** Common slide properties shared across all layouts */
 const slideBaseFields = {
   accentColor: accentColorKeySchema.optional(),
   style: slideStyleSchema.optional(),
+  /** Optional eyebrow (small uppercase pill) shown at the top of the slide above the header/title. */
+  eyebrow: eyebrowSchema.optional(),
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -232,6 +243,8 @@ export const titleSlideSchema = z.object({
   subtitle: z.string().optional(),
   author: z.string().optional(),
   note: z.string().optional(),
+  /** Optional row of small pill badges shown below the subtitle / note (e.g. ["🚀 deploy or die", "⚡ weekly output"]). */
+  chips: z.array(z.string()).optional(),
 });
 
 // ─── columns ───
@@ -301,6 +314,8 @@ export const statItemSchema = z.object({
   label: z.string(),
   color: accentColorKeySchema.optional(),
   change: z.string().optional(),
+  /** Optional accent-colored typographic prefix shown above the value (e.g. "01"). */
+  numLabel: z.string().optional(),
 });
 
 export const statsSlideSchema = z.object({
