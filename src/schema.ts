@@ -30,11 +30,17 @@ export const slideThemeFontsSchema = z.object({
   title: z.string(),
   body: z.string(),
   mono: z.string(),
+  /** Optional secondary font for numbers / English labels (e.g. "Outfit"). When set, registers a `font-accent` Tailwind utility. */
+  accent: z.string().optional(),
 });
 
 export const slideThemeSchema = z.object({
   colors: slideThemeColorsSchema,
   fonts: slideThemeFontsSchema,
+  /** Optional CSS background value applied to every slide (e.g. `linear-gradient(...)`). Per-slide `style.bgGradient` wins over this. */
+  bgGradient: z.string().optional(),
+  /** Optional CSS gradient injected as `<style>` to paint `h1.font-title.font-bold` with `background-clip: text`. */
+  titleGradient: z.string().optional(),
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -201,6 +207,8 @@ export const cardSchema = z.object({
 
 export const slideStyleSchema = z.object({
   bgColor: z.string().optional(),
+  /** Optional per-slide CSS background value (e.g. `linear-gradient(...)`); wins over `theme.bgGradient` and `bgColor`. */
+  bgGradient: z.string().optional(),
   decorations: z.boolean().optional(),
   bgOpacity: z.number().optional(),
   footer: z.string().optional(),

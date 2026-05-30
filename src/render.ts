@@ -1,5 +1,5 @@
 import type { SlideTheme, SlideLayout } from "./schema.js";
-import { escapeHtml, buildTailwindConfig, sanitizeHex, detectBlockTypes } from "./utils.js";
+import { escapeHtml, buildTailwindConfig, sanitizeHex, detectBlockTypes, isSafeCssBackground } from "./utils.js";
 import { renderSlideContent } from "./layouts/index.js";
 
 /** Pre-resolved branding data (all sources converted to data URLs) */
@@ -78,9 +78,32 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
 
   const slideStyle = slide.style;
   const hasBgOpacity = branding?.backgroundImage?.bgOpacity !== undefined;
-  const bgCls = hasBgOpacity || slideStyle?.bgColor ? "" : "bg-d-bg";
-  const bgColorStyle = slideStyle?.bgColor ? ` style="background-color:#${sanitizeHex(slideStyle.bgColor)}"` : "";
-  const inlineStyle = hasBgOpacity ? "" : bgColorStyle;
+
+  // Background resolution priority (any new field is optional; when absent the output is byte-identical to pre-extension behavior):
+  //   slide.style.bgGradient > theme.bgGradient > slide.style.bgColor > theme.colors.bg (via `bg-d-bg` class).
+  // hasBgOpacity (branding bg image with custom opacity) still suppresses background styling, as before.
+  let bgCls = "";
+  let inlineStyle = "";
+  if (!hasBgOpacity) {
+    const slideBgGradient = slideStyle?.bgGradient && isSafeCssBackground(slideStyle.bgGradient) ? slideStyle.bgGradient : undefined;
+    const themeBgGradient = !slideBgGradient && theme.bgGradient && isSafeCssBackground(theme.bgGradient) ? theme.bgGradient : undefined;
+    const bgGradient = slideBgGradient ?? themeBgGradient;
+    if (bgGradient) {
+      inlineStyle = ` style="background:${bgGradient}"`;
+    } else if (slideStyle?.bgColor) {
+      inlineStyle = ` style="background-color:#${sanitizeHex(slideStyle.bgColor)}"`;
+    } else {
+      bgCls = "bg-d-bg";
+    }
+  }
+
+  // Optional `<style>` block: when theme.titleGradient is set (and safe), paint h1 titles with a background-clipped gradient.
+  // Prepend a newline so that when set the block appears on its own line; when empty, no extra blank line is emitted.
+  const titleGradientCss =
+    theme.titleGradient && isSafeCssBackground(theme.titleGradient)
+      ? `\n<style>h1.font-title.font-bold{background:${theme.titleGradient};-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}</style>`
+      : "";
+
   const footer = slideStyle?.footer ? `<p class="absolute bottom-2 right-4 text-xs text-d-dim font-body">${escapeHtml(slideStyle.footer)}</p>` : "";
   const referenceHtml = reference
     ? `<div class="mt-auto px-4 pb-2"><p class="text-sm text-d-muted font-body opacity-80">${escapeHtml(reference)}</p></div>`
@@ -100,7 +123,7 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
 ${cdnScripts}
 <style>
   html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
-</style>
+</style>${titleGradientCss}
 </head>
 <body class="h-full">
 <div class="relative overflow-hidden ${bgCls} w-full h-full flex flex-col"${inlineStyle}>

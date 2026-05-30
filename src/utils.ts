@@ -110,18 +110,34 @@ export const buildTailwindConfig = (theme: SlideTheme): string => {
       colorMap[mapped] = `#${v}`;
     }
   });
+  const fontFamily: Record<string, string[]> = {
+    title: [theme.fonts.title, "serif"],
+    body: [theme.fonts.body, "Arial", "sans-serif"],
+    mono: [theme.fonts.mono, "monospace"],
+  };
+  if (theme.fonts.accent) {
+    fontFamily.accent = [theme.fonts.accent, "ui-sans-serif", "system-ui", "sans-serif"];
+  }
   return JSON.stringify({
     theme: {
       extend: {
         colors: { d: colorMap },
-        fontFamily: {
-          title: [theme.fonts.title, "serif"],
-          body: [theme.fonts.body, "Arial", "sans-serif"],
-          mono: [theme.fonts.mono, "monospace"],
-        },
+        fontFamily,
       },
     },
   });
+};
+
+/**
+ * Validate a user-supplied CSS background value before injecting it into an HTML attribute or `<style>` block.
+ * Accepts gradient / color syntax; rejects anything that could break out of the attribute context, inject script,
+ * or pull external resources. Returns true only when the string is safe to embed verbatim.
+ */
+export const isSafeCssBackground = (s: string): boolean => {
+  if (!s || typeof s !== "string" || s.length > 2000) return false;
+  if (/[<>"'`{};:\\\r\n]/.test(s)) return false;
+  if (/(javascript|vbscript|data\s+|expression\s*\(|behavior|@import|url\s*\(|attr\s*\(|content\s*\()/i.test(s)) return false;
+  return true;
 };
 
 /** Render a numbered circle badge */
