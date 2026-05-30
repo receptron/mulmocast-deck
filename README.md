@@ -63,4 +63,4 @@ Each layout has its own Zod schema under `slideLayoutSchema` (a discriminated un
 
 ## License
 
-AGPL-3.0-only
+MIT

@@ -39,7 +39,7 @@
     "tailwind",
     "presentation"
   ],
-  "license": "AGPL-3.0-only",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/receptron/mulmocast-slide.git"
