@@ -1,6 +1,6 @@
 {
   "name": "@mulmocast/deck",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "MulmoCast deck DSL: JSON-described semantic slide layouts (stats, comparison, timeline, ...) rendered to Tailwind-based HTML",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
