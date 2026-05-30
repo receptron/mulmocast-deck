@@ -1,10 +1,12 @@
 import type { BigQuoteSlide } from "../schema.js";
-import { renderInlineMarkup, accentBar, resolveAccent } from "../utils.js";
+import { renderInlineMarkup, accentBar, resolveAccent, renderEyebrow } from "../utils.js";
 
 export const layoutBigQuote = (data: BigQuoteSlide): string => {
   const accent = resolveAccent(data.accentColor);
+  const eyebrowHtml = renderEyebrow(data.eyebrow, accent);
   const parts: string[] = [];
   parts.push(`<div class="flex flex-col items-center justify-center h-full px-20">`);
+  if (eyebrowHtml) parts.push(`  <div class="mb-6">${eyebrowHtml}</div>`);
   parts.push(`  ${accentBar(accent, "w-24 mb-8")}`);
   parts.push(`  <blockquote class="text-[32px] text-d-text font-title italic text-center leading-relaxed">`);
   parts.push(`    &ldquo;${renderInlineMarkup(data.quote)}&rdquo;`);

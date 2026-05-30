@@ -14,6 +14,9 @@ export const layoutStats = (data: StatsSlide): string => {
     const color = resolveItemColor(stat.color, data.accentColor);
     parts.push(`<div class="flex-1 bg-d-card rounded-lg shadow-lg p-10 text-center">`);
     parts.push(`  <div class="h-[3px] bg-${c(color)} rounded-full w-12 mx-auto mb-6"></div>`);
+    if (stat.numLabel) {
+      parts.push(`  <p class="font-accent font-extrabold text-${c(color)} text-sm tracking-wider mb-2">${renderInlineMarkup(stat.numLabel)}</p>`);
+    }
     parts.push(`  <p class="text-[52px] font-bold text-${c(color)} font-body leading-none">${renderInlineMarkup(stat.value)}</p>`);
     parts.push(`  <p class="text-lg text-d-muted font-body mt-4">${renderInlineMarkup(stat.label)}</p>`);
     if (stat.change) {

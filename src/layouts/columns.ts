@@ -1,5 +1,5 @@
 import type { ColumnsSlide, Card } from "../schema.js";
-import { renderInlineMarkup, c, cardWrap, numBadge, iconSquare, slideHeader, renderOptionalCallout, resolveAccent } from "../utils.js";
+import { renderInlineMarkup, c, cardWrap, numBadge, iconSquare, slideHeader, renderOptionalCallout, resolveAccent, renderNumLabel } from "../utils.js";
 import { renderCardContentBlocks } from "../blocks.js";
 
 const buildColumnCard = (col: Card): string => {
@@ -20,7 +20,8 @@ const buildColumnCard = (col: Card): string => {
     if (col.label) {
       inner.push(`<p class="text-sm font-bold text-${c(accent)} font-body">${renderInlineMarkup(col.label)}</p>`);
     }
-    inner.push(`<h3 class="text-2xl font-title font-bold text-d-text mt-1">${renderInlineMarkup(col.title)}</h3>`);
+    const numPrefix = renderNumLabel(col.numLabel, accent);
+    inner.push(`<h3 class="text-2xl font-title font-bold text-d-text mt-1">${numPrefix}${renderInlineMarkup(col.title)}</h3>`);
   }
 
   if (col.content) {

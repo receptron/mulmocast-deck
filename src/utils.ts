@@ -178,10 +178,44 @@ export const renderCalloutBar = (obj: { text: string; label?: string; color?: st
 </div>`;
 };
 
+/**
+ * Render an eyebrow pill (small uppercase letter-spaced category label).
+ * Renders nothing when `eyebrow` is undefined, so callers can pass through unconditionally.
+ */
+export const renderEyebrow = (eyebrow: { label: string; color?: string } | undefined, defaultColor?: string): string => {
+  if (!eyebrow) return "";
+  const color = c(eyebrow.color ?? defaultColor ?? "primary");
+  return `<span class="inline-flex items-center gap-2 font-accent font-extrabold uppercase tracking-[0.16em] text-[12px] px-3 py-1 rounded-full border border-d-textDim/30 bg-${color}/10 text-${color}">${renderInlineMarkup(eyebrow.label)}</span>`;
+};
+
+/** Render a chip-row (small bordered pill badges, e.g. tags below a title). Empty / undefined input renders nothing. */
+export const renderChipRow = (chips: string[] | undefined): string => {
+  if (!chips || chips.length === 0) return "";
+  const items = chips
+    .map((label) => `<span class="text-sm px-3 py-1.5 rounded-full border border-d-textDim/30 bg-d-card/40 text-d-text">${renderInlineMarkup(label)}</span>`)
+    .join("");
+  return `<div class="flex gap-2 flex-wrap mt-4">${items}</div>`;
+};
+
+/** Render an accent-colored typographic prefix (e.g. "01") to be placed before a card / stat title. */
+export const renderNumLabel = (label: string | undefined, colorKey?: string): string => {
+  if (!label) return "";
+  const color = c(colorKey ?? "primary");
+  return `<span class="font-accent font-extrabold text-${color} mr-2">${renderInlineMarkup(label)}</span>`;
+};
+
 /** Render header text elements (stepLabel + title + subtitle) without wrapping div */
-export const renderHeaderText = (data: { accentColor?: string; stepLabel?: string; title: string; subtitle?: string }): string => {
+export const renderHeaderText = (data: {
+  accentColor?: string;
+  stepLabel?: string;
+  title: string;
+  subtitle?: string;
+  eyebrow?: { label: string; color?: string };
+}): string => {
   const accent = resolveAccent(data.accentColor);
   const lines: string[] = [];
+  const eyebrowHtml = renderEyebrow(data.eyebrow, accent);
+  if (eyebrowHtml) lines.push(`<div class="mb-2">${eyebrowHtml}</div>`);
   if (data.stepLabel) {
     lines.push(`<p class="text-sm font-bold text-${c(accent)} font-body">${renderInlineMarkup(data.stepLabel)}</p>`);
   }
@@ -192,14 +226,26 @@ export const renderHeaderText = (data: { accentColor?: string; stepLabel?: strin
   return lines.join("\n");
 };
 
-/** Render the common slide header (accent bar + title + subtitle) */
-export const slideHeader = (data: { accentColor?: string; stepLabel?: string; title: string; subtitle?: string }): string => {
+/** Render the common slide header (accent bar + title + subtitle, plus optional eyebrow pill) */
+export const slideHeader = (data: {
+  accentColor?: string;
+  stepLabel?: string;
+  title: string;
+  subtitle?: string;
+  eyebrow?: { label: string; color?: string };
+}): string => {
   const accent = resolveAccent(data.accentColor);
   return [accentBar(accent), `<div class="px-12 pt-5 shrink-0">`, renderHeaderText(data), `</div>`].join("\n");
 };
 
 /** Render accent bar + vertically-centered wrapper with header text (used by stats, timeline) */
-export const centeredSlideHeader = (data: { accentColor?: string; stepLabel?: string; title: string; subtitle?: string }): string => {
+export const centeredSlideHeader = (data: {
+  accentColor?: string;
+  stepLabel?: string;
+  title: string;
+  subtitle?: string;
+  eyebrow?: { label: string; color?: string };
+}): string => {
   const accent = resolveAccent(data.accentColor);
   return [accentBar(accent), `<div class="flex-1 flex flex-col justify-center px-12 min-h-0">`, renderHeaderText(data)].join("\n");
 };
