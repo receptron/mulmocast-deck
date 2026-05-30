@@ -1,0 +1,54 @@
+{
+  "name": "@mulmocast/slide",
+  "version": "0.1.0",
+  "description": "MulmoCast slide DSL: JSON-described semantic layouts (stats, comparison, timeline, ...) rendered to Tailwind-based HTML",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src test",
+    "format": "prettier --write '{src,test}/**/*.ts'",
+    "test": "tsx --test ./test/test_*.ts",
+    "prepublishOnly": "yarn run build"
+  },
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.6.0",
+    "prettier": "^3.8.3",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "mulmocast",
+    "slide",
+    "dsl",
+    "tailwind",
+    "presentation"
+  ],
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/receptron/mulmocast-slide.git"
+  },
+  "bugs": {
+    "url": "https://github.com/receptron/mulmocast-slide/issues"
+  },
+  "homepage": "https://github.com/receptron/mulmocast-slide#readme",
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
