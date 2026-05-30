@@ -144,14 +144,25 @@ const renderSubBullets = (item: BulletItem): string => {
   return `\n${subs}`;
 };
 
+/** Map a per-item status icon variant to its glyph and color class segment. */
+const STATUS_ICON_GLYPHS: Record<"ok" | "no" | "warn", { glyph: string; color: string }> = {
+  ok: { glyph: "\u2713", color: "success" }, // \u2713
+  no: { glyph: "\u2715", color: "danger" }, // \u2715
+  warn: { glyph: "\u26a0", color: "warning" }, // \u26a0
+};
+
 const renderBullets = (block: ContentBlock & { type: "bullets" }): string => {
   const tag = block.ordered ? "ol" : "ul";
   const items = block.items
     .map((item, i) => {
-      const marker = block.ordered ? `${i + 1}.` : escapeHtml(block.icon || "\u2022");
+      // Per-item status icon overrides the block-level marker / numbered prefix.
+      const statusIcon = typeof item === "object" && item.icon ? STATUS_ICON_GLYPHS[item.icon] : undefined;
+      const markerHtml = statusIcon
+        ? `<span class="text-${c(statusIcon.color)} font-extrabold shrink-0">${statusIcon.glyph}</span>`
+        : `<span class="text-d-dim shrink-0">${block.ordered ? `${i + 1}.` : escapeHtml(block.icon || "\u2022")}</span>`;
       const text = bulletItemText(item);
       const subHtml = renderSubBullets(item);
-      return `  <li class="flex flex-col gap-1"><div class="flex gap-2"><span class="text-d-dim shrink-0">${marker}</span><span>${renderInlineMarkup(text)}</span></div>${subHtml}</li>`;
+      return `  <li class="flex flex-col gap-1"><div class="flex gap-2">${markerHtml}<span>${renderInlineMarkup(text)}</span></div>${subHtml}</li>`;
     })
     .join("\n");
   return `<${tag} class="space-y-2 text-[15px] text-d-muted font-body">\n${items}\n</${tag}>`;

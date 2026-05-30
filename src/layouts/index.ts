@@ -11,6 +11,7 @@ import { layoutMatrix } from "./matrix.js";
 import { layoutTable } from "./table.js";
 import { layoutFunnel } from "./funnel.js";
 import { layoutWaterfall } from "./waterfall.js";
+import { layoutManifesto } from "./manifesto.js";
 import { escapeHtml } from "../utils.js";
 
 /** Render the inner content of a slide (without the wrapper div) */
@@ -40,6 +41,8 @@ export const renderSlideContent = (slide: SlideLayout): string => {
       return layoutFunnel(slide);
     case "waterfall":
       return layoutWaterfall(slide);
+    case "manifesto":
+      return layoutManifesto(slide);
     default: {
       const _exhaustive: never = slide;
       return `<p class="text-white p-8">Unknown layout: ${escapeHtml(String((_exhaustive as { layout: string }).layout))}</p>`;

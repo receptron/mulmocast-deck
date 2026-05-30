@@ -113,6 +113,70 @@ const slides = {
     quote: "100の議論より、1つ作って試す。",
     author: "deploy or die.",
   },
+  // Phase 3: icon bullets — ✓ / ✕ / ⚠ with per-item status color
+  bullets_icons: {
+    layout: "columns",
+    eyebrow: { label: "Self-check" },
+    title: "今日のあなた、どっち?",
+    columns: [
+      {
+        title: "やってる人",
+        accentColor: "success",
+        content: [
+          {
+            type: "bullets",
+            items: [
+              { text: "毎週 deploy している", icon: "ok" },
+              { text: "自分のプロダクトを自分で使う", icon: "ok" },
+              { text: "週1で発信している", icon: "ok" },
+            ],
+          },
+        ],
+      },
+      {
+        title: "やっていない人",
+        accentColor: "danger",
+        content: [
+          {
+            type: "bullets",
+            items: [
+              { text: "完成してから出そうと考えている", icon: "no" },
+              { text: "他の人の意見ばかり気にしている", icon: "warn" },
+              { text: "「もし〜だったら」が口癖", icon: "no" },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  // Phase 3: hot timeline — the current quarter glows
+  timeline_hot: {
+    layout: "timeline",
+    eyebrow: { label: "Roadmap", color: "primary" },
+    title: "プロジェクトの進捗",
+    items: [
+      { date: "Q1", title: "Kickoff", description: "全員集合", done: true, color: "success" },
+      { date: "Q2", title: "MVP", description: "最初の動くもの", done: true, color: "success" },
+      { date: "Q3", title: "Dogfooding", description: "今ここ", hot: true, color: "warning" },
+      { date: "Q4", title: "Launch", description: "世に出す" },
+    ],
+  },
+  // Phase 3: manifesto / creed grid
+  manifesto_creed: {
+    layout: "manifesto",
+    eyebrow: { label: "Our 5 commitments", color: "accent" },
+    title: "BootCampで大事にしていること",
+    stepLabel: "原則",
+    columns: 2,
+    items: [
+      { title: "Deploy or die.", description: "100の議論より1つの実装。動かしてから語る。", accentColor: "primary" },
+      { title: "週1アウトプット.", description: "形にして共有 → フィードバック → 改善。", accentColor: "success" },
+      { title: "自分で使うものを作る.", description: "ドッグフーディングできないものは続かない。", accentColor: "warning" },
+      { title: "相互フィードバック.", description: "孤独に作るより、互いに殴り合う方が速い。", accentColor: "info" },
+      { title: "完成主義を捨てる.", description: "60%で出して、走りながら直す。", accentColor: "danger" },
+      { title: "deploy or die.", description: "もう一度言う。動いてないアイデアは存在しない。", accentColor: "accent" },
+    ],
+  },
 };
 
 let count = 0;
