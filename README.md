@@ -1,19 +1,19 @@
-# @mulmocast/slide
+# @mulmocast/deck
 
-Self-contained slide DSL for MulmoCast.
+Self-contained deck DSL for MulmoCast.
 
-A `SlideLayout` JSON object describes a semantic slide (e.g. `stats`, `comparison`, `timeline`, `table`, `columns`, …). `generateSlideHTML()` renders it to a single HTML string styled with Tailwind via CDN. No Puppeteer, no filesystem — pure data → HTML. Works in both Node.js and the browser.
+A `SlideLayout` JSON object describes a single semantic slide (e.g. `stats`, `comparison`, `timeline`, `table`, `columns`, …). `generateSlideHTML()` renders it to a single HTML string styled with Tailwind via CDN. No Puppeteer, no filesystem — pure data → HTML. Works in both Node.js and the browser.
 
 ## Install
 
 ```bash
-yarn add @mulmocast/slide
+yarn add @mulmocast/deck
 ```
 
 ## Usage
 
 ```ts
-import { generateSlideHTML, type SlideLayout, type SlideTheme } from "@mulmocast/slide";
+import { generateSlideHTML, type SlideLayout, type SlideTheme } from "@mulmocast/deck";
 
 const slide: SlideLayout = {
   layout: "stats",
@@ -59,7 +59,7 @@ Each layout has its own Zod schema under `slideLayoutSchema` (a discriminated un
 ## Consumers
 
 - [`mulmocast`](https://www.npmjs.com/package/mulmocast) — CLI uses `generateSlideHTML()` then snapshots to PNG with Puppeteer.
-- `@mulmocast/slide-web` *(WIP)* — Browser editor with live preview and schema-driven inspector.
+- `@mulmocast/deck-web` *(WIP)* — Browser editor with live preview and schema-driven inspector.
 
 ## License
 
