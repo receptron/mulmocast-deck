@@ -1,11 +1,11 @@
-// Public API for @mulmocast/slide
-// Self-contained slide DSL: SlideLayout JSON → Tailwind-based HTML string.
+// Public API for @mulmocast/deck
+// Self-contained deck DSL: SlideLayout JSON → Tailwind-based HTML string.
 
 export { generateSlideHTML } from "./render.js";
 export type { ResolvedBranding } from "./render.js";
 export { renderSlideContent } from "./layouts/index.js";
 export { renderContentBlock, renderContentBlocks } from "./blocks.js";
-export { escapeHtml } from "./utils.js";
+export { escapeHtml, resetSlideIdCounter, renderInlineMarkup } from "./utils.js";
 
 // Schemas
 export {
