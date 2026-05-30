@@ -16,7 +16,7 @@
     "lib"
   ],
   "dependencies": {
-    "zod": "^4.3.5"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
