@@ -240,7 +240,7 @@ export const renderHeaderText = (data: {
   const accent = resolveAccent(data.accentColor);
   const lines: string[] = [];
   const eyebrowHtml = renderEyebrow(data.eyebrow, accent);
-  if (eyebrowHtml) lines.push(`<div class="mb-2">${eyebrowHtml}</div>`);
+  if (eyebrowHtml) lines.push(`<div class="mb-3">${eyebrowHtml}</div>`);
   if (data.stepLabel) {
     lines.push(`<p class="text-sm font-bold text-${c(accent)} font-body">${renderInlineMarkup(data.stepLabel)}</p>`);
   }
@@ -264,7 +264,7 @@ export const slideHeader = (data: {
   subtitleSize?: "default" | "big" | "lead";
 }): string => {
   const accent = resolveAccent(data.accentColor);
-  return [accentBar(accent), `<div class="px-12 pt-5 shrink-0">`, renderHeaderText(data), `</div>`].join("\n");
+  return [accentBar(accent), `<div class="px-12 pt-8 shrink-0">`, renderHeaderText(data), `</div>`].join("\n");
 };
 
 /** Render accent bar + vertically-centered wrapper with header text (used by stats, timeline) */

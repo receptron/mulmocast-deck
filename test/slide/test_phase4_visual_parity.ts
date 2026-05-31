@@ -204,14 +204,14 @@ test("density=compact: emits .density-compact class and CSS overrides", () => {
   });
   const html = generateSlideHTML(baseTheme, slide);
   assert.ok(html.includes("density-compact"), "wrapper should carry the density-compact class");
-  assert.ok(/font-size:13px!important/.test(html), "compact CSS body size override should be injected");
+  assert.ok(/font-size:14px!important/.test(html), "compact CSS body size override should be injected (14px after Phase 6 retune)");
 });
 
 test("density=default omits the density override CSS entirely", () => {
   const slide = slideLayoutSchema.parse({ layout: "stats", title: "T", stats: [{ value: "1", label: "A" }] });
   const html = generateSlideHTML(baseTheme, slide);
   assert.ok(!html.includes("density-compact"));
-  assert.ok(!/font-size:13px!important/.test(html));
+  assert.ok(!/font-size:14px!important/.test(html));
 });
 
 // ─── comparison ratio ───
