@@ -247,6 +247,9 @@ export const eyebrowSchema = z.object({
 /** Slide content density. "compact" shrinks body / bullet / callout text and tightens padding (~85% scale). */
 export const slideDensitySchema = z.enum(["compact", "default"]);
 
+/** Slide title (h2) size override. "small" tightens for content-heavy slides, "hero" enlarges for closing/section slides. */
+export const slideTitleSizeSchema = z.enum(["small", "default", "large", "hero"]);
+
 /** Common slide properties shared across all layouts */
 const slideBaseFields = {
   accentColor: accentColorKeySchema.optional(),
@@ -255,6 +258,8 @@ const slideBaseFields = {
   eyebrow: eyebrowSchema.optional(),
   /** Per-slide density. "compact" reduces text size and padding for slides with a lot of content. */
   density: slideDensitySchema.optional(),
+  /** Optional override for the slide title (h2) size. Affects layouts that go through slideHeader / centeredSlideHeader. */
+  titleSize: slideTitleSizeSchema.optional(),
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -294,6 +299,8 @@ export const comparisonPanelSchema = z.object({
   footer: z.string().optional(),
   /** Optional column ratio (numeric, used as the panel's flex-grow). Default = 1 on both sides (50/50). */
   ratio: z.number().positive().optional(),
+  /** When true, drop the card chrome (background, top accent bar, padding) and render content directly on the slide. */
+  cardless: z.boolean().optional(),
 });
 
 export const comparisonSlideSchema = z.object({
@@ -315,6 +322,8 @@ export const gridItemSchema = z.object({
   num: z.number().optional(),
   icon: z.string().optional(),
   content: z.array(contentBlockSchema).optional(),
+  /** Optional column span (1-4) for asymmetric grids (e.g. one wide item across the row). Default = 1. */
+  span: z.number().int().min(1).max(4).optional(),
 });
 
 export const gridSlideSchema = z.object({
@@ -624,6 +633,7 @@ export type ManifestoSlide = z.infer<typeof manifestoSlideSchema>;
 export type BulletIcon = z.infer<typeof bulletIconSchema>;
 export type TextSize = z.infer<typeof textSizeSchema>;
 export type SlideDensity = z.infer<typeof slideDensitySchema>;
+export type SlideTitleSize = z.infer<typeof slideTitleSizeSchema>;
 export type SlideBrandingLogo = z.infer<typeof slideBrandingLogoSchema>;
 export type SlideBranding = z.infer<typeof slideBrandingSchema>;
 export type MulmoSlideMedia = z.infer<typeof mulmoSlideMediaSchema>;

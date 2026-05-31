@@ -22,6 +22,14 @@ const buildPanel = (panel: ComparisonPanel): string => {
   // emitting `flex-grow` inline keeps the output predictable and avoids depending on JIT mode.
   const flexStyle = panel.ratio !== undefined ? ` style="flex-grow:${panel.ratio};flex-shrink:1;flex-basis:0"` : "";
   const flexCls = panel.ratio !== undefined ? "" : " flex-1";
+
+  // Cardless: render content directly without card chrome. Useful for the bullet-list / card mixed layout
+  // common in slide decks (one bare list, one boxed callout).
+  if (panel.cardless) {
+    return `<div class="flex flex-col min-h-0${flexCls} py-1"${flexStyle}>
+${inner.join("\n")}
+</div>`;
+  }
   return `<div class="bg-d-card rounded-lg shadow-lg overflow-hidden flex flex-col min-h-0${flexCls}"${flexStyle}>
   ${accentBar(accent)}
   <div class="p-5 flex flex-col flex-1 min-h-0 overflow-hidden">

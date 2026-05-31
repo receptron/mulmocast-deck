@@ -34,7 +34,10 @@ export const layoutGrid = (data: GridSlide): string => {
       inner.push(`<div class="mt-3 space-y-3 flex-1 min-h-0 overflow-hidden flex flex-col">${renderCardContentBlocks(item.content)}</div>`);
     }
 
-    parts.push(cardWrap(itemAccent, inner.join("\n")));
+    // Asymmetric grids: items can span multiple columns. Class names are mapped explicitly so the JIT compiler keeps them.
+    const SPAN_CLS: Record<number, string> = { 1: "", 2: "col-span-2", 3: "col-span-3", 4: "col-span-4" };
+    const spanCls = item.span && item.span > 1 ? SPAN_CLS[item.span] || "" : "";
+    parts.push(cardWrap(itemAccent, inner.join("\n"), spanCls));
   });
 
   parts.push(`</div>`);

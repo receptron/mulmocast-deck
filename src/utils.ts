@@ -212,6 +212,14 @@ export const renderNumLabel = (label: string | undefined, colorKey?: string): st
   return `<span class="font-accent font-extrabold text-${color} mr-2">${renderInlineMarkup(label)}</span>`;
 };
 
+/** h2 font-size by titleSize variant — kept in one place so it's easy to keep proportional to subtitle / body. */
+const TITLE_SIZE_CLS: Record<"small" | "default" | "large" | "hero", string> = {
+  small: "text-[34px]",
+  default: "text-[42px]",
+  large: "text-[52px]",
+  hero: "text-[64px]",
+};
+
 /** Render header text elements (stepLabel + title + subtitle) without wrapping div */
 export const renderHeaderText = (data: {
   accentColor?: string;
@@ -219,6 +227,7 @@ export const renderHeaderText = (data: {
   title: string;
   subtitle?: string;
   eyebrow?: { label: string; color?: string };
+  titleSize?: "small" | "default" | "large" | "hero";
 }): string => {
   const accent = resolveAccent(data.accentColor);
   const lines: string[] = [];
@@ -227,7 +236,8 @@ export const renderHeaderText = (data: {
   if (data.stepLabel) {
     lines.push(`<p class="text-sm font-bold text-${c(accent)} font-body">${renderInlineMarkup(data.stepLabel)}</p>`);
   }
-  lines.push(`<h2 class="text-[42px] leading-tight font-title font-bold text-d-text">${renderInlineMarkup(data.title)}</h2>`);
+  const titleCls = TITLE_SIZE_CLS[data.titleSize ?? "default"];
+  lines.push(`<h2 class="${titleCls} leading-tight font-title font-bold text-d-text">${renderInlineMarkup(data.title)}</h2>`);
   if (data.subtitle) {
     lines.push(`<p class="text-[15px] text-d-dim mt-2 font-body">${renderInlineMarkup(data.subtitle)}</p>`);
   }
@@ -241,6 +251,7 @@ export const slideHeader = (data: {
   title: string;
   subtitle?: string;
   eyebrow?: { label: string; color?: string };
+  titleSize?: "small" | "default" | "large" | "hero";
 }): string => {
   const accent = resolveAccent(data.accentColor);
   return [accentBar(accent), `<div class="px-12 pt-5 shrink-0">`, renderHeaderText(data), `</div>`].join("\n");
@@ -253,6 +264,7 @@ export const centeredSlideHeader = (data: {
   title: string;
   subtitle?: string;
   eyebrow?: { label: string; color?: string };
+  titleSize?: "small" | "default" | "large" | "hero";
 }): string => {
   const accent = resolveAccent(data.accentColor);
   return [accentBar(accent), `<div class="flex-1 flex flex-col justify-center px-12 min-h-0">`, renderHeaderText(data)].join("\n");

@@ -1,17 +1,26 @@
 import type { TitleSlide } from "../schema.js";
 import { renderInlineMarkup, accentBar, renderEyebrow, renderChipRow, resolveAccent } from "../utils.js";
 
+/** h1 font-size for the title layout, keyed by titleSize variant. h1 sits one step bigger than h2 at every step. */
+const TITLE_H1_CLS: Record<"small" | "default" | "large" | "hero", string> = {
+  small: "text-[48px]",
+  default: "text-[60px]",
+  large: "text-[72px]",
+  hero: "text-[88px]",
+};
+
 export const layoutTitle = (data: TitleSlide): string => {
   const accent = resolveAccent(data.accentColor);
   const eyebrowHtml = renderEyebrow(data.eyebrow, accent);
   const chipsHtml = renderChipRow(data.chips);
+  const titleCls = TITLE_H1_CLS[data.titleSize ?? "default"];
   return [
     accentBar("primary"),
     `<div class="absolute -top-20 -right-8 w-[360px] h-[360px] rounded-full bg-d-primary opacity-10"></div>`,
     `<div class="absolute -bottom-12 -left-16 w-[280px] h-[280px] rounded-full bg-d-accent opacity-10"></div>`,
     `<div class="flex flex-col justify-center h-full px-16 relative z-10">`,
     eyebrowHtml ? `  <div class="mb-4">${eyebrowHtml}</div>` : "",
-    `  <h1 class="text-[60px] leading-tight font-title font-bold text-d-text">${renderInlineMarkup(data.title)}</h1>`,
+    `  <h1 class="${titleCls} leading-tight font-title font-bold text-d-text">${renderInlineMarkup(data.title)}</h1>`,
     data.subtitle ? `  <p class="text-2xl text-d-muted mt-6 font-body">${renderInlineMarkup(data.subtitle)}</p>` : "",
     data.author ? `  <p class="text-lg text-d-dim mt-10 font-body">${renderInlineMarkup(data.author)}</p>` : "",
     data.note
