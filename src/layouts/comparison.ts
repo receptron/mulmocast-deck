@@ -1,5 +1,5 @@
 import type { ComparisonSlide, ComparisonPanel } from "../schema.js";
-import { renderInlineMarkup, c, cardWrap, slideHeader, renderOptionalCallout, resolveAccent } from "../utils.js";
+import { renderInlineMarkup, c, accentBar, slideHeader, renderOptionalCallout, resolveAccent } from "../utils.js";
 import { renderContentBlocks } from "../blocks.js";
 
 const buildPanel = (panel: ComparisonPanel): string => {
@@ -18,7 +18,24 @@ const buildPanel = (panel: ComparisonPanel): string => {
     inner.push(`<p class="text-sm text-d-dim font-body mt-auto pt-3">${renderInlineMarkup(panel.footer)}</p>`);
   }
 
-  return cardWrap(accent, inner.join("\n"), "flex-1");
+  // Tailwind's arbitrary `flex-[1.5]` works at runtime but stops short of clean class sanitization;
+  // emitting `flex-grow` inline keeps the output predictable and avoids depending on JIT mode.
+  const flexStyle = panel.ratio !== undefined ? ` style="flex-grow:${panel.ratio};flex-shrink:1;flex-basis:0"` : "";
+  const flexCls = panel.ratio !== undefined ? "" : " flex-1";
+
+  // Cardless: render content directly without card chrome. Useful for the bullet-list / card mixed layout
+  // common in slide decks (one bare list, one boxed callout).
+  if (panel.cardless) {
+    return `<div class="flex flex-col min-h-0${flexCls} py-1"${flexStyle}>
+${inner.join("\n")}
+</div>`;
+  }
+  return `<div class="bg-d-card rounded-lg shadow-lg overflow-hidden flex flex-col min-h-0${flexCls}"${flexStyle}>
+  ${accentBar(accent)}
+  <div class="p-5 flex flex-col flex-1 min-h-0 overflow-hidden">
+${inner.join("\n")}
+  </div>
+</div>`;
 };
 
 export const layoutComparison = (data: ComparisonSlide): string => {

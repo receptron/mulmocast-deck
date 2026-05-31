@@ -34,6 +34,9 @@ export const slideThemeFontsSchema = z.object({
   accent: z.string().optional(),
 });
 
+/** Card visual style. "glass" = transparent gradient bg + subtle border (matches reveal.js polished decks); "solid" = opaque card (default). */
+export const slideCardStyleSchema = z.enum(["glass", "solid"]);
+
 export const slideThemeSchema = z.object({
   colors: slideThemeColorsSchema,
   fonts: slideThemeFontsSchema,
@@ -41,11 +44,22 @@ export const slideThemeSchema = z.object({
   bgGradient: z.string().optional(),
   /** Optional CSS gradient injected as `<style>` to paint `h1.font-title.font-bold` with `background-clip: text`. */
   titleGradient: z.string().optional(),
+  /** Default card style for the entire deck. Per-slide layouts can still override individual cards. */
+  cardStyle: slideCardStyleSchema.optional(),
 });
 
 // ═══════════════════════════════════════════════════════════
 // Content Blocks — the atoms of slide content
 // ═══════════════════════════════════════════════════════════
+
+/**
+ * Abstract text-size variant. Maps to a theme-aware (size, weight, color) tuple,
+ * so authors don't have to hand-pick pixel sizes per slide.
+ *   lead = muted intro paragraph (slightly larger, dim)
+ *   big  = emphasized body (larger, full text color)
+ *   sub  = card / footnote body (smaller, dim)
+ */
+export const textSizeSchema = z.enum(["lead", "big", "sub"]);
 
 export const textBlockSchema = z.object({
   type: z.literal("text"),
@@ -55,6 +69,7 @@ export const textBlockSchema = z.object({
   dim: z.boolean().optional(),
   fontSize: z.number().optional(),
   color: accentColorKeySchema.optional(),
+  size: textSizeSchema.optional(),
 });
 
 /** Sub-bullet item: plain string or object with text */
@@ -71,6 +86,8 @@ export const bulletItemSchema = z.union([
     items: z.array(subBulletItemSchema).optional(),
     /** Optional status icon shown in place of the default bullet marker ("ok" → ✓, "no" → ✕, "warn" → ⚠). */
     icon: bulletIconSchema.optional(),
+    /** Per-item size variant (overrides the block-level size). */
+    size: textSizeSchema.optional(),
   }),
 ]);
 
@@ -79,6 +96,8 @@ export const bulletsBlockSchema = z.object({
   items: z.array(bulletItemSchema),
   ordered: z.boolean().optional(),
   icon: z.string().optional(),
+  /** Block-level size variant — applied to every item that doesn't set its own. */
+  size: textSizeSchema.optional(),
 });
 
 export const codeBlockSchema = z.object({
@@ -93,6 +112,8 @@ export const calloutBlockSchema = z.object({
   label: z.string().optional(),
   color: accentColorKeySchema.optional(),
   style: z.enum(["quote", "info", "warning"]).optional(),
+  /** Optional size variant for the callout body text. */
+  size: textSizeSchema.optional(),
 });
 
 export const metricBlockSchema = z.object({
@@ -105,6 +126,16 @@ export const metricBlockSchema = z.object({
 
 export const dividerBlockSchema = z.object({
   type: z.literal("divider"),
+  color: accentColorKeySchema.optional(),
+});
+
+/**
+ * Small uppercase accent label, intended for use INSIDE cards (matches reveal.js .tag).
+ * Distinct from the slide-level `eyebrow`: this is per-block and sits above an h3 / title in a card.
+ */
+export const tagBlockSchema = z.object({
+  type: z.literal("tag"),
+  text: z.string(),
   color: accentColorKeySchema.optional(),
 });
 
@@ -166,6 +197,7 @@ const baseBlockSchemas = [
   chartBlockSchema,
   mermaidBlockSchema,
   tableBlockSchema,
+  tagBlockSchema,
 ] as const;
 
 /** All content block types except section (used inside section to prevent recursion) */
@@ -228,12 +260,27 @@ export const eyebrowSchema = z.object({
   color: accentColorKeySchema.optional(),
 });
 
+/** Slide content density. "compact" shrinks body / bullet / callout text and tightens padding (~85% scale). */
+export const slideDensitySchema = z.enum(["compact", "default"]);
+
+/** Slide title (h2) size override. "small" tightens for content-heavy slides, "hero" enlarges for closing/section slides. */
+export const slideTitleSizeSchema = z.enum(["small", "default", "large", "hero"]);
+
+/** Slide subtitle size variant. Defaults to body (15px); "big" matches reveal.js .big.muted ≈ 22px. */
+export const slideSubtitleSizeSchema = z.enum(["default", "big", "lead"]);
+
 /** Common slide properties shared across all layouts */
 const slideBaseFields = {
   accentColor: accentColorKeySchema.optional(),
   style: slideStyleSchema.optional(),
   /** Optional eyebrow (small uppercase pill) shown at the top of the slide above the header/title. */
   eyebrow: eyebrowSchema.optional(),
+  /** Per-slide density. "compact" reduces text size and padding for slides with a lot of content. */
+  density: slideDensitySchema.optional(),
+  /** Optional override for the slide title (h2) size. Affects layouts that go through slideHeader / centeredSlideHeader. */
+  titleSize: slideTitleSizeSchema.optional(),
+  /** Optional override for the slide subtitle size. Defaults to body (15px). */
+  subtitleSize: slideSubtitleSizeSchema.optional(),
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -271,6 +318,10 @@ export const comparisonPanelSchema = z.object({
   accentColor: accentColorKeySchema.optional(),
   content: z.array(contentBlockSchema).optional(),
   footer: z.string().optional(),
+  /** Optional column ratio (numeric, used as the panel's flex-grow). Default = 1 on both sides (50/50). */
+  ratio: z.number().positive().optional(),
+  /** When true, drop the card chrome (background, top accent bar, padding) and render content directly on the slide. */
+  cardless: z.boolean().optional(),
 });
 
 export const comparisonSlideSchema = z.object({
@@ -292,6 +343,8 @@ export const gridItemSchema = z.object({
   num: z.number().optional(),
   icon: z.string().optional(),
   content: z.array(contentBlockSchema).optional(),
+  /** Optional column span (1-4) for asymmetric grids (e.g. one wide item across the row). Default = 1. */
+  span: z.number().int().min(1).max(4).optional(),
 });
 
 export const gridSlideSchema = z.object({
@@ -599,6 +652,12 @@ export type WaterfallSlide = z.infer<typeof waterfallSlideSchema>;
 export type ManifestoLine = z.infer<typeof manifestoLineSchema>;
 export type ManifestoSlide = z.infer<typeof manifestoSlideSchema>;
 export type BulletIcon = z.infer<typeof bulletIconSchema>;
+export type TextSize = z.infer<typeof textSizeSchema>;
+export type SlideDensity = z.infer<typeof slideDensitySchema>;
+export type SlideTitleSize = z.infer<typeof slideTitleSizeSchema>;
+export type SlideSubtitleSize = z.infer<typeof slideSubtitleSizeSchema>;
+export type SlideCardStyle = z.infer<typeof slideCardStyleSchema>;
+export type TagBlock = z.infer<typeof tagBlockSchema>;
 export type SlideBrandingLogo = z.infer<typeof slideBrandingLogoSchema>;
 export type SlideBranding = z.infer<typeof slideBrandingSchema>;
 export type MulmoSlideMedia = z.infer<typeof mulmoSlideMediaSchema>;

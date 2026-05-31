@@ -19,14 +19,22 @@ export const nl2br = (s: string): string => {
 const inlineColorKeys = new Set(["primary", "accent", "success", "warning", "danger", "info", "highlight"]);
 
 /**
- * Render inline markup: escape HTML first, then parse **bold** and {color:text}.
+ * Render inline markup: escape HTML first, then parse **bold**, *emphasis*, and {color:text}.
  * Also converts newlines to <br>.
  * Safe: escapeHtml runs before any markup parsing, so XSS is impossible.
+ *
+ * **bold**     → <strong>...</strong>       (kept as-is for back-compat)
+ * *emphasis*   → <em>...</em>               (rendered in warning color via CSS; mimics reveal.js amber <em>)
+ * {color:text} → <span class="text-d-color">...</span>
+ *
+ * Bold is parsed first; the single-asterisk pass only matches what's left, so "**x**" doesn't double-fire.
  */
 export const renderInlineMarkup = (s: string): string => {
   let result = escapeHtml(s);
-  // **bold** → <strong>bold</strong>
+  // Bold MUST run before emphasis so **x** doesn't get eaten by the single-* pass.
   result = result.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  // Single-* emphasis. The negative-lookbehind/lookahead keeps it from biting into surviving "**" inside <strong>.
+  result = result.replace(/(?<![*\w])\*(?!\s)([^*\n]+?)(?<!\s)\*(?!\w)/g, '<em class="text-d-warning not-italic font-bold">$1</em>');
   // {color:text} → <span class="text-d-color">text</span>
   result = result.replace(/\{([a-z]+):(.+?)\}/g, (_match, color: string, text: string) => {
     if (inlineColorKeys.has(color)) {
@@ -204,6 +212,21 @@ export const renderNumLabel = (label: string | undefined, colorKey?: string): st
   return `<span class="font-accent font-extrabold text-${color} mr-2">${renderInlineMarkup(label)}</span>`;
 };
 
+/** h2 font-size by titleSize variant — kept in one place so it's easy to keep proportional to subtitle / body. */
+const TITLE_SIZE_CLS: Record<"small" | "default" | "large" | "hero", string> = {
+  small: "text-[34px]",
+  default: "text-[42px]",
+  large: "text-[52px]",
+  hero: "text-[64px]",
+};
+
+/** Subtitle font-size by variant. Default keeps the original 15px; bigger variants align with the reveal.js .big/.lead helpers. */
+const SUBTITLE_SIZE_CLS: Record<"default" | "big" | "lead", string> = {
+  default: "text-[15px]",
+  lead: "text-[17px]",
+  big: "text-[22px]",
+};
+
 /** Render header text elements (stepLabel + title + subtitle) without wrapping div */
 export const renderHeaderText = (data: {
   accentColor?: string;
@@ -211,17 +234,21 @@ export const renderHeaderText = (data: {
   title: string;
   subtitle?: string;
   eyebrow?: { label: string; color?: string };
+  titleSize?: "small" | "default" | "large" | "hero";
+  subtitleSize?: "default" | "big" | "lead";
 }): string => {
   const accent = resolveAccent(data.accentColor);
   const lines: string[] = [];
   const eyebrowHtml = renderEyebrow(data.eyebrow, accent);
-  if (eyebrowHtml) lines.push(`<div class="mb-2">${eyebrowHtml}</div>`);
+  if (eyebrowHtml) lines.push(`<div class="mb-3">${eyebrowHtml}</div>`);
   if (data.stepLabel) {
     lines.push(`<p class="text-sm font-bold text-${c(accent)} font-body">${renderInlineMarkup(data.stepLabel)}</p>`);
   }
-  lines.push(`<h2 class="text-[42px] leading-tight font-title font-bold text-d-text">${renderInlineMarkup(data.title)}</h2>`);
+  const titleCls = TITLE_SIZE_CLS[data.titleSize ?? "default"];
+  lines.push(`<h2 class="${titleCls} leading-tight font-title font-bold text-d-text">${renderInlineMarkup(data.title)}</h2>`);
   if (data.subtitle) {
-    lines.push(`<p class="text-[15px] text-d-dim mt-2 font-body">${renderInlineMarkup(data.subtitle)}</p>`);
+    const subtitleCls = SUBTITLE_SIZE_CLS[data.subtitleSize ?? "default"];
+    lines.push(`<p class="${subtitleCls} text-d-dim mt-2 font-body">${renderInlineMarkup(data.subtitle)}</p>`);
   }
   return lines.join("\n");
 };
@@ -233,9 +260,11 @@ export const slideHeader = (data: {
   title: string;
   subtitle?: string;
   eyebrow?: { label: string; color?: string };
+  titleSize?: "small" | "default" | "large" | "hero";
+  subtitleSize?: "default" | "big" | "lead";
 }): string => {
   const accent = resolveAccent(data.accentColor);
-  return [accentBar(accent), `<div class="px-12 pt-5 shrink-0">`, renderHeaderText(data), `</div>`].join("\n");
+  return [accentBar(accent), `<div class="px-12 pt-8 shrink-0">`, renderHeaderText(data), `</div>`].join("\n");
 };
 
 /** Render accent bar + vertically-centered wrapper with header text (used by stats, timeline) */
@@ -245,6 +274,8 @@ export const centeredSlideHeader = (data: {
   title: string;
   subtitle?: string;
   eyebrow?: { label: string; color?: string };
+  titleSize?: "small" | "default" | "large" | "hero";
+  subtitleSize?: "default" | "big" | "lead";
 }): string => {
   const accent = resolveAccent(data.accentColor);
   return [accentBar(accent), `<div class="flex-1 flex flex-col justify-center px-12 min-h-0">`, renderHeaderText(data)].join("\n");

@@ -104,6 +104,23 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
       ? `\n<style>h1.font-title.font-bold{background:${theme.titleGradient};-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}</style>`
       : "";
 
+  // Density: when slide.density === "compact", shrink body text and pad spacing — approximates reveal.js' autofit.
+  // Scoped to .density-compact so the override never leaks to other slides; the rules are intentionally !important
+  // because they have to win over per-utility Tailwind rules injected by the CDN at runtime.
+  const densityCss =
+    slide.density === "compact"
+      ? `\n<style>.density-compact p,.density-compact li{font-size:14px!important;line-height:1.5}.density-compact h2{font-size:32px!important}.density-compact h3{font-size:17px!important}.density-compact .px-12{padding-left:28px!important;padding-right:28px!important}.density-compact .px-16{padding-left:36px!important;padding-right:36px!important}.density-compact .pt-5{padding-top:10px!important}.density-compact .mt-10{margin-top:16px!important}.density-compact .mt-5{margin-top:10px!important}.density-compact .gap-4{gap:10px!important}.density-compact .gap-6{gap:14px!important}.density-compact .space-y-2>*+*{margin-top:4px!important}.density-compact .space-y-4>*+*{margin-top:8px!important}.density-compact .p-5{padding:14px!important}.density-compact .p-10{padding:20px!important}</style>`
+      : "";
+  const densityCls = slide.density === "compact" ? " density-compact" : "";
+
+  // Glass card style: swap the default solid bg-d-card cards for a subtle gradient + border (reveal.js-style "glass" cards).
+  // Scoped to .card-glass on the slide wrapper so it doesn't leak to other slides on the same page.
+  const cardGlassCss =
+    theme.cardStyle === "glass"
+      ? `\n<style>.card-glass .bg-d-card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02))!important;border:1px solid rgba(120,150,220,.22)!important;box-shadow:none!important}.card-glass .rounded-lg{border-radius:16px!important}</style>`
+      : "";
+  const cardStyleCls = theme.cardStyle === "glass" ? " card-glass" : "";
+
   const footer = slideStyle?.footer ? `<p class="absolute bottom-2 right-4 text-xs text-d-dim font-body">${escapeHtml(slideStyle.footer)}</p>` : "";
   const referenceHtml = reference
     ? `<div class="mt-auto px-4 pb-2"><p class="text-sm text-d-muted font-body opacity-80">${escapeHtml(reference)}</p></div>`
@@ -123,10 +140,10 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
 ${cdnScripts}
 <style>
   html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
-</style>${titleGradientCss}
+</style>${titleGradientCss}${densityCss}${cardGlassCss}
 </head>
 <body class="h-full">
-<div class="relative overflow-hidden ${bgCls} w-full h-full flex flex-col"${inlineStyle}>
+<div class="relative overflow-hidden ${bgCls}${densityCls}${cardStyleCls} w-full h-full flex flex-col"${inlineStyle}>
 ${brandingBg}
 <div class="relative z-[1] flex flex-col flex-1">
 ${content}
