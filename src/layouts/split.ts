@@ -1,5 +1,5 @@
 import type { SplitSlide, SplitPanel } from "../schema.js";
-import { renderInlineMarkup, c, accentBar, resolveAccent } from "../utils.js";
+import { renderInlineMarkup, c, accentBar, resolveAccent, dp } from "../utils.js";
 import { renderContentBlocks } from "../blocks.js";
 
 const resolveValign = (valign: "top" | "center" | "bottom" | undefined): string => {
@@ -8,7 +8,7 @@ const resolveValign = (valign: "top" | "center" | "bottom" | undefined): string 
   return "justify-center";
 };
 
-const buildSplitPanel = (panel: SplitPanel, fallbackAccent: string, ratio: number): string => {
+const buildSplitPanel = (panel: SplitPanel, fallbackAccent: string, ratio: number, basePath: string): string => {
   const accent = panel.accentColor || fallbackAccent;
   const bg = panel.dark ? "bg-d-card" : "";
   const vCls = resolveValign(panel.valign);
@@ -17,20 +17,20 @@ const buildSplitPanel = (panel: SplitPanel, fallbackAccent: string, ratio: numbe
   if (panel.label) {
     if (panel.labelBadge) {
       lines.push(
-        `  <span class="inline-block self-start px-6 py-2.5 rounded-lg bg-${c(accent)} text-lg font-bold text-white font-title mb-4">${renderInlineMarkup(panel.label)}</span>`,
+        `  <span class="inline-block self-start px-6 py-2.5 rounded-lg bg-${c(accent)} text-lg font-bold text-white font-title mb-4"${dp(`${basePath}.label`)}>${renderInlineMarkup(panel.label)}</span>`,
       );
     } else {
-      lines.push(`  <p class="text-sm font-bold text-${c(accent)} font-body mb-2">${renderInlineMarkup(panel.label)}</p>`);
+      lines.push(`  <p class="text-sm font-bold text-${c(accent)} font-body mb-2"${dp(`${basePath}.label`)}>${renderInlineMarkup(panel.label)}</p>`);
     }
   }
   if (panel.title) {
-    lines.push(`  <h2 class="text-[36px] leading-tight font-title font-bold text-d-text">${renderInlineMarkup(panel.title)}</h2>`);
+    lines.push(`  <h2 class="text-[36px] leading-tight font-title font-bold text-d-text"${dp(`${basePath}.title`)}>${renderInlineMarkup(panel.title)}</h2>`);
   }
   if (panel.subtitle) {
-    lines.push(`  <p class="text-base text-d-dim font-body mt-3">${renderInlineMarkup(panel.subtitle)}</p>`);
+    lines.push(`  <p class="text-base text-d-dim font-body mt-3"${dp(`${basePath}.subtitle`)}>${renderInlineMarkup(panel.subtitle)}</p>`);
   }
   if (panel.content) {
-    lines.push(`  <div class="mt-6 space-y-3">${renderContentBlocks(panel.content)}</div>`);
+    lines.push(`  <div class="mt-6 space-y-3">${renderContentBlocks(panel.content, `${basePath}.content`)}</div>`);
   }
   lines.push(`</div>`);
   return lines.join("\n");
@@ -47,10 +47,10 @@ export const layoutSplit = (data: SplitSlide): string => {
   parts.push(`<div class="flex h-full">`);
 
   if (data.left) {
-    parts.push(buildSplitPanel(data.left, accent, leftRatio));
+    parts.push(buildSplitPanel(data.left, accent, leftRatio, "left"));
   }
   if (data.right) {
-    parts.push(buildSplitPanel(data.right, accent, rightRatio));
+    parts.push(buildSplitPanel(data.right, accent, rightRatio, "right"));
   }
 
   parts.push(`</div>`);

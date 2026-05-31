@@ -10,6 +10,18 @@ export const escapeHtml = (s: string): string => {
     .replace(/'/g, "&#39;");
 };
 
+/**
+ * Emit a `data-mulmo-path="..."` attribute (with leading space) for an editable text node.
+ * Consumers like @mulmocast/deck-web use this to map clicks in the rendered HTML back to
+ * the source SlideLayout JSON path (e.g. `title`, `stats[0].value`, `columns[0].content[1].text`).
+ *
+ * Empty path → empty string, so callers can pass `dp(path)` unconditionally.
+ */
+export const dp = (path: string): string => (path ? ` data-mulmo-path="${escapeHtml(path)}"` : "");
+
+/** Compose a child path: `dpJoin("columns[0]", "title")` → `columns[0].title`. */
+export const dpJoin = (base: string, segment: string): string => (base ? `${base}.${segment}` : segment);
+
 /** Escape HTML and convert newlines to <br> */
 export const nl2br = (s: string): string => {
   return escapeHtml(s).replace(/\n/g, "<br>");
@@ -190,17 +202,20 @@ export const renderCalloutBar = (obj: { text: string; label?: string; color?: st
  * Render an eyebrow pill (small uppercase letter-spaced category label).
  * Renders nothing when `eyebrow` is undefined, so callers can pass through unconditionally.
  */
-export const renderEyebrow = (eyebrow: { label: string; color?: string } | undefined, defaultColor?: string): string => {
+export const renderEyebrow = (eyebrow: { label: string; color?: string } | undefined, defaultColor?: string, basePath = ""): string => {
   if (!eyebrow) return "";
   const color = c(eyebrow.color ?? defaultColor ?? "primary");
-  return `<span class="inline-flex items-center gap-2 font-accent font-extrabold uppercase tracking-[0.16em] text-[12px] px-3 py-1 rounded-full border border-d-textDim/30 bg-${color}/10 text-${color}">${renderInlineMarkup(eyebrow.label)}</span>`;
+  return `<span class="inline-flex items-center gap-2 font-accent font-extrabold uppercase tracking-[0.16em] text-[12px] px-3 py-1 rounded-full border border-d-textDim/30 bg-${color}/10 text-${color}"${dp(dpJoin(basePath, "eyebrow.label"))}>${renderInlineMarkup(eyebrow.label)}</span>`;
 };
 
 /** Render a chip-row (small bordered pill badges, e.g. tags below a title). Empty / undefined input renders nothing. */
-export const renderChipRow = (chips: string[] | undefined): string => {
+export const renderChipRow = (chips: string[] | undefined, basePath = ""): string => {
   if (!chips || chips.length === 0) return "";
   const items = chips
-    .map((label) => `<span class="text-sm px-3 py-1.5 rounded-full border border-d-textDim/30 bg-d-card/40 text-d-text">${renderInlineMarkup(label)}</span>`)
+    .map(
+      (label, i) =>
+        `<span class="text-sm px-3 py-1.5 rounded-full border border-d-textDim/30 bg-d-card/40 text-d-text"${dp(dpJoin(basePath, `chips[${i}]`))}>${renderInlineMarkup(label)}</span>`,
+    )
     .join("");
   return `<div class="flex gap-2 flex-wrap mt-4">${items}</div>`;
 };
@@ -228,27 +243,30 @@ const SUBTITLE_SIZE_CLS: Record<"default" | "big" | "lead", string> = {
 };
 
 /** Render header text elements (stepLabel + title + subtitle) without wrapping div */
-export const renderHeaderText = (data: {
-  accentColor?: string;
-  stepLabel?: string;
-  title: string;
-  subtitle?: string;
-  eyebrow?: { label: string; color?: string };
-  titleSize?: "small" | "default" | "large" | "hero";
-  subtitleSize?: "default" | "big" | "lead";
-}): string => {
+export const renderHeaderText = (
+  data: {
+    accentColor?: string;
+    stepLabel?: string;
+    title: string;
+    subtitle?: string;
+    eyebrow?: { label: string; color?: string };
+    titleSize?: "small" | "default" | "large" | "hero";
+    subtitleSize?: "default" | "big" | "lead";
+  },
+  basePath = "",
+): string => {
   const accent = resolveAccent(data.accentColor);
   const lines: string[] = [];
-  const eyebrowHtml = renderEyebrow(data.eyebrow, accent);
+  const eyebrowHtml = renderEyebrow(data.eyebrow, accent, basePath);
   if (eyebrowHtml) lines.push(`<div class="mb-3">${eyebrowHtml}</div>`);
   if (data.stepLabel) {
-    lines.push(`<p class="text-sm font-bold text-${c(accent)} font-body">${renderInlineMarkup(data.stepLabel)}</p>`);
+    lines.push(`<p class="text-sm font-bold text-${c(accent)} font-body"${dp(dpJoin(basePath, "stepLabel"))}>${renderInlineMarkup(data.stepLabel)}</p>`);
   }
   const titleCls = TITLE_SIZE_CLS[data.titleSize ?? "default"];
-  lines.push(`<h2 class="${titleCls} leading-tight font-title font-bold text-d-text">${renderInlineMarkup(data.title)}</h2>`);
+  lines.push(`<h2 class="${titleCls} leading-tight font-title font-bold text-d-text"${dp(dpJoin(basePath, "title"))}>${renderInlineMarkup(data.title)}</h2>`);
   if (data.subtitle) {
     const subtitleCls = SUBTITLE_SIZE_CLS[data.subtitleSize ?? "default"];
-    lines.push(`<p class="${subtitleCls} text-d-dim mt-2 font-body">${renderInlineMarkup(data.subtitle)}</p>`);
+    lines.push(`<p class="${subtitleCls} text-d-dim mt-2 font-body"${dp(dpJoin(basePath, "subtitle"))}>${renderInlineMarkup(data.subtitle)}</p>`);
   }
   return lines.join("\n");
 };
