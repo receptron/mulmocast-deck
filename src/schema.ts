@@ -47,6 +47,15 @@ export const slideThemeSchema = z.object({
 // Content Blocks — the atoms of slide content
 // ═══════════════════════════════════════════════════════════
 
+/**
+ * Abstract text-size variant. Maps to a theme-aware (size, weight, color) tuple,
+ * so authors don't have to hand-pick pixel sizes per slide.
+ *   lead = muted intro paragraph (slightly larger, dim)
+ *   big  = emphasized body (larger, full text color)
+ *   sub  = card / footnote body (smaller, dim)
+ */
+export const textSizeSchema = z.enum(["lead", "big", "sub"]);
+
 export const textBlockSchema = z.object({
   type: z.literal("text"),
   value: z.string(),
@@ -55,6 +64,7 @@ export const textBlockSchema = z.object({
   dim: z.boolean().optional(),
   fontSize: z.number().optional(),
   color: accentColorKeySchema.optional(),
+  size: textSizeSchema.optional(),
 });
 
 /** Sub-bullet item: plain string or object with text */
@@ -71,6 +81,8 @@ export const bulletItemSchema = z.union([
     items: z.array(subBulletItemSchema).optional(),
     /** Optional status icon shown in place of the default bullet marker ("ok" → ✓, "no" → ✕, "warn" → ⚠). */
     icon: bulletIconSchema.optional(),
+    /** Per-item size variant (overrides the block-level size). */
+    size: textSizeSchema.optional(),
   }),
 ]);
 
@@ -79,6 +91,8 @@ export const bulletsBlockSchema = z.object({
   items: z.array(bulletItemSchema),
   ordered: z.boolean().optional(),
   icon: z.string().optional(),
+  /** Block-level size variant — applied to every item that doesn't set its own. */
+  size: textSizeSchema.optional(),
 });
 
 export const codeBlockSchema = z.object({
@@ -93,6 +107,8 @@ export const calloutBlockSchema = z.object({
   label: z.string().optional(),
   color: accentColorKeySchema.optional(),
   style: z.enum(["quote", "info", "warning"]).optional(),
+  /** Optional size variant for the callout body text. */
+  size: textSizeSchema.optional(),
 });
 
 export const metricBlockSchema = z.object({
@@ -228,12 +244,17 @@ export const eyebrowSchema = z.object({
   color: accentColorKeySchema.optional(),
 });
 
+/** Slide content density. "compact" shrinks body / bullet / callout text and tightens padding (~85% scale). */
+export const slideDensitySchema = z.enum(["compact", "default"]);
+
 /** Common slide properties shared across all layouts */
 const slideBaseFields = {
   accentColor: accentColorKeySchema.optional(),
   style: slideStyleSchema.optional(),
   /** Optional eyebrow (small uppercase pill) shown at the top of the slide above the header/title. */
   eyebrow: eyebrowSchema.optional(),
+  /** Per-slide density. "compact" reduces text size and padding for slides with a lot of content. */
+  density: slideDensitySchema.optional(),
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -271,6 +292,8 @@ export const comparisonPanelSchema = z.object({
   accentColor: accentColorKeySchema.optional(),
   content: z.array(contentBlockSchema).optional(),
   footer: z.string().optional(),
+  /** Optional column ratio (numeric, used as the panel's flex-grow). Default = 1 on both sides (50/50). */
+  ratio: z.number().positive().optional(),
 });
 
 export const comparisonSlideSchema = z.object({
@@ -599,6 +622,8 @@ export type WaterfallSlide = z.infer<typeof waterfallSlideSchema>;
 export type ManifestoLine = z.infer<typeof manifestoLineSchema>;
 export type ManifestoSlide = z.infer<typeof manifestoSlideSchema>;
 export type BulletIcon = z.infer<typeof bulletIconSchema>;
+export type TextSize = z.infer<typeof textSizeSchema>;
+export type SlideDensity = z.infer<typeof slideDensitySchema>;
 export type SlideBrandingLogo = z.infer<typeof slideBrandingLogoSchema>;
 export type SlideBranding = z.infer<typeof slideBrandingSchema>;
 export type MulmoSlideMedia = z.infer<typeof mulmoSlideMediaSchema>;

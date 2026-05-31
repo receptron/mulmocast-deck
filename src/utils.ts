@@ -19,14 +19,22 @@ export const nl2br = (s: string): string => {
 const inlineColorKeys = new Set(["primary", "accent", "success", "warning", "danger", "info", "highlight"]);
 
 /**
- * Render inline markup: escape HTML first, then parse **bold** and {color:text}.
+ * Render inline markup: escape HTML first, then parse **bold**, *emphasis*, and {color:text}.
  * Also converts newlines to <br>.
  * Safe: escapeHtml runs before any markup parsing, so XSS is impossible.
+ *
+ * **bold**     → <strong>...</strong>       (kept as-is for back-compat)
+ * *emphasis*   → <em>...</em>               (rendered in warning color via CSS; mimics reveal.js amber <em>)
+ * {color:text} → <span class="text-d-color">...</span>
+ *
+ * Bold is parsed first; the single-asterisk pass only matches what's left, so "**x**" doesn't double-fire.
  */
 export const renderInlineMarkup = (s: string): string => {
   let result = escapeHtml(s);
-  // **bold** → <strong>bold</strong>
+  // Bold MUST run before emphasis so **x** doesn't get eaten by the single-* pass.
   result = result.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  // Single-* emphasis. The negative-lookbehind/lookahead keeps it from biting into surviving "**" inside <strong>.
+  result = result.replace(/(?<![*\w])\*(?!\s)([^*\n]+?)(?<!\s)\*(?!\w)/g, '<em class="text-d-warning not-italic font-bold">$1</em>');
   // {color:text} → <span class="text-d-color">text</span>
   result = result.replace(/\{([a-z]+):(.+?)\}/g, (_match, color: string, text: string) => {
     if (inlineColorKeys.has(color)) {

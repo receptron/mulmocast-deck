@@ -1,5 +1,19 @@
-import type { ContentBlock, BulletItem, SectionBlock, TableBlock, TableCellValue } from "./schema.js";
+import type { ContentBlock, BulletItem, SectionBlock, TableBlock, TableCellValue, TextSize } from "./schema.js";
 import { escapeHtml, c, generateSlideId, renderInlineMarkup, blockTitle, resolveChangeColor, resolveAccent } from "./utils.js";
+
+/**
+ * Map a TextSize variant to its Tailwind classes.
+ * default — body / muted (the original 0.1.x behavior; emitted only when neither size nor numeric fontSize is set).
+ * lead    — slightly larger muted intro paragraph.
+ * big     — larger, full text color.
+ * sub     — smaller, dimmer card footnote.
+ */
+const TEXT_SIZE_STYLES: Record<TextSize | "default", { fontCls: string; colorCls?: string }> = {
+  default: { fontCls: "text-[15px]", colorCls: "text-d-muted" },
+  lead: { fontCls: "text-[17px] leading-relaxed", colorCls: "text-d-muted" },
+  big: { fontCls: "text-[19px] leading-snug", colorCls: "text-d-text" },
+  sub: { fontCls: "text-[13px] leading-snug", colorCls: "text-d-dim" },
+};
 
 // ─── Table cell rendering (shared with layouts/table.ts) ───
 
@@ -108,10 +122,11 @@ export const renderCardContentBlocks = (blocks: ContentBlock[]): string => {
     .join("\n");
 };
 
-const resolveTextColor = (block: ContentBlock & { type: "text" }): string => {
+/** When the author explicitly sets color/dim, honor it; otherwise inherit from the size variant's default. */
+const resolveTextColor = (block: ContentBlock & { type: "text" }): string | undefined => {
   if (block.color) return `text-${c(block.color)}`;
   if (block.dim) return "text-d-dim";
-  return "text-d-muted";
+  return undefined;
 };
 
 const resolveAlign = (align: string | undefined): string => {
@@ -121,11 +136,15 @@ const resolveAlign = (align: string | undefined): string => {
 };
 
 const renderText = (block: ContentBlock & { type: "text" }): string => {
-  const color = resolveTextColor(block);
+  // Resolution order for size: explicit numeric `fontSize` (legacy) wins over new `size` variant.
+  const legacyXl = block.fontSize !== undefined && block.fontSize >= 18;
+  const style = TEXT_SIZE_STYLES[block.size ?? "default"];
+  const sizeCls = legacyXl ? "text-xl" : style.fontCls;
+  const explicitColor = resolveTextColor(block);
+  const colorCls = explicitColor ?? style.colorCls ?? "text-d-muted";
   const bold = block.bold ? "font-bold" : "";
-  const size = block.fontSize !== undefined && block.fontSize >= 18 ? "text-xl" : "text-[15px]";
   const alignCls = resolveAlign(block.align);
-  return `<p class="${size} ${color} ${bold} ${alignCls} font-body leading-relaxed">${renderInlineMarkup(block.value)}</p>`;
+  return `<p class="${sizeCls} ${colorCls} ${bold} ${alignCls} font-body leading-relaxed">${renderInlineMarkup(block.value)}</p>`;
 };
 
 /** Extract text from a bullet item (string or object) */
@@ -151,8 +170,15 @@ const STATUS_ICON_GLYPHS: Record<"ok" | "no" | "warn", { glyph: string; color: s
   warn: { glyph: "\u26a0", color: "warning" }, // \u26a0
 };
 
+/** Resolve the size variant for a bullet item \u2014 per-item size wins over block-level size. */
+const resolveBulletSize = (block: ContentBlock & { type: "bullets" }, item: BulletItem): TextSize | "default" => {
+  if (typeof item === "object" && item.size) return item.size;
+  return block.size ?? "default";
+};
+
 const renderBullets = (block: ContentBlock & { type: "bullets" }): string => {
   const tag = block.ordered ? "ol" : "ul";
+  const blockStyle = TEXT_SIZE_STYLES[block.size ?? "default"];
   const items = block.items
     .map((item, i) => {
       // Per-item status icon overrides the block-level marker / numbered prefix.
@@ -162,10 +188,14 @@ const renderBullets = (block: ContentBlock & { type: "bullets" }): string => {
         : `<span class="text-d-dim shrink-0">${block.ordered ? `${i + 1}.` : escapeHtml(block.icon || "\u2022")}</span>`;
       const text = bulletItemText(item);
       const subHtml = renderSubBullets(item);
-      return `  <li class="flex flex-col gap-1"><div class="flex gap-2">${markerHtml}<span>${renderInlineMarkup(text)}</span></div>${subHtml}</li>`;
+      const itemStyle = TEXT_SIZE_STYLES[resolveBulletSize(block, item)];
+      // Emit per-item classes only when they differ from the block-level style so output stays compact in the common case.
+      const itemCls =
+        itemStyle.fontCls === blockStyle.fontCls && itemStyle.colorCls === blockStyle.colorCls ? "" : ` ${itemStyle.fontCls} ${itemStyle.colorCls}`;
+      return `  <li class="flex flex-col gap-1${itemCls}"><div class="flex gap-2">${markerHtml}<span>${renderInlineMarkup(text)}</span></div>${subHtml}</li>`;
     })
     .join("\n");
-  return `<${tag} class="space-y-2 text-[15px] text-d-muted font-body">\n${items}\n</${tag}>`;
+  return `<${tag} class="space-y-2 ${blockStyle.fontCls} ${blockStyle.colorCls} font-body">\n${items}\n</${tag}>`;
 };
 
 const renderCode = (block: ContentBlock & { type: "code" }): string => {
@@ -181,11 +211,13 @@ const renderCallout = (block: ContentBlock & { type: "callout" }): string => {
   };
   const borderCls = resolveBorderCls(block.style);
   const bg = isQuote ? "bg-d-alt" : "bg-d-card";
-  const textCls = isQuote ? "italic text-d-muted" : "text-d-muted";
+  // Pre-Phase-4 default was `text-sm` (~14px). Map to the size variants only when explicitly requested.
+  const sizeStyle = block.size ? TEXT_SIZE_STYLES[block.size] : { fontCls: "text-sm", colorCls: "text-d-muted" };
+  const textCls = isQuote ? `italic ${sizeStyle.colorCls}` : sizeStyle.colorCls;
   const content = block.label
-    ? `<span class="font-bold text-${c(block.color || "warning")}">${renderInlineMarkup(block.label)}:</span> <span class="text-d-muted">${renderInlineMarkup(block.text)}</span>`
+    ? `<span class="font-bold text-${c(block.color || "warning")}">${renderInlineMarkup(block.label)}:</span> <span class="${textCls}">${renderInlineMarkup(block.text)}</span>`
     : `<span class="${textCls}">${renderInlineMarkup(block.text)}</span>`;
-  return `<div class="${bg} ${borderCls} p-3 rounded text-sm font-body">${content}</div>`;
+  return `<div class="${bg} ${borderCls} p-3 rounded ${sizeStyle.fontCls} font-body">${content}</div>`;
 };
 
 const renderMetric = (block: ContentBlock & { type: "metric" }): string => {
