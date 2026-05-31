@@ -1,12 +1,15 @@
 import type { TitleSlide } from "../schema.js";
 import { renderInlineMarkup, accentBar, renderEyebrow, renderChipRow, resolveAccent } from "../utils.js";
 
-/** h1 font-size for the title layout, keyed by titleSize variant. h1 sits one step bigger than h2 at every step. */
+/**
+ * h1 font-size for the title layout, keyed by titleSize variant.
+ * Tuned to match reveal.js scale (base 30px × multiplier): default ≈ 2em, hero ≈ 2.5em.
+ */
 const TITLE_H1_CLS: Record<"small" | "default" | "large" | "hero", string> = {
   small: "text-[48px]",
   default: "text-[60px]",
-  large: "text-[72px]",
-  hero: "text-[88px]",
+  large: "text-[68px]",
+  hero: "text-[76px]",
 };
 
 export const layoutTitle = (data: TitleSlide): string => {

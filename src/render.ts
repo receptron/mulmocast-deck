@@ -113,6 +113,14 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
       : "";
   const densityCls = slide.density === "compact" ? " density-compact" : "";
 
+  // Glass card style: swap the default solid bg-d-card cards for a subtle gradient + border (reveal.js-style "glass" cards).
+  // Scoped to .card-glass on the slide wrapper so it doesn't leak to other slides on the same page.
+  const cardGlassCss =
+    theme.cardStyle === "glass"
+      ? `\n<style>.card-glass .bg-d-card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02))!important;border:1px solid rgba(120,150,220,.22)!important;box-shadow:none!important}.card-glass .rounded-lg{border-radius:16px!important}</style>`
+      : "";
+  const cardStyleCls = theme.cardStyle === "glass" ? " card-glass" : "";
+
   const footer = slideStyle?.footer ? `<p class="absolute bottom-2 right-4 text-xs text-d-dim font-body">${escapeHtml(slideStyle.footer)}</p>` : "";
   const referenceHtml = reference
     ? `<div class="mt-auto px-4 pb-2"><p class="text-sm text-d-muted font-body opacity-80">${escapeHtml(reference)}</p></div>`
@@ -132,10 +140,10 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
 ${cdnScripts}
 <style>
   html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
-</style>${titleGradientCss}${densityCss}
+</style>${titleGradientCss}${densityCss}${cardGlassCss}
 </head>
 <body class="h-full">
-<div class="relative overflow-hidden ${bgCls}${densityCls} w-full h-full flex flex-col"${inlineStyle}>
+<div class="relative overflow-hidden ${bgCls}${densityCls}${cardStyleCls} w-full h-full flex flex-col"${inlineStyle}>
 ${brandingBg}
 <div class="relative z-[1] flex flex-col flex-1">
 ${content}

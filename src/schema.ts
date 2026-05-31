@@ -34,6 +34,9 @@ export const slideThemeFontsSchema = z.object({
   accent: z.string().optional(),
 });
 
+/** Card visual style. "glass" = transparent gradient bg + subtle border (matches reveal.js polished decks); "solid" = opaque card (default). */
+export const slideCardStyleSchema = z.enum(["glass", "solid"]);
+
 export const slideThemeSchema = z.object({
   colors: slideThemeColorsSchema,
   fonts: slideThemeFontsSchema,
@@ -41,6 +44,8 @@ export const slideThemeSchema = z.object({
   bgGradient: z.string().optional(),
   /** Optional CSS gradient injected as `<style>` to paint `h1.font-title.font-bold` with `background-clip: text`. */
   titleGradient: z.string().optional(),
+  /** Default card style for the entire deck. Per-slide layouts can still override individual cards. */
+  cardStyle: slideCardStyleSchema.optional(),
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -124,6 +129,16 @@ export const dividerBlockSchema = z.object({
   color: accentColorKeySchema.optional(),
 });
 
+/**
+ * Small uppercase accent label, intended for use INSIDE cards (matches reveal.js .tag).
+ * Distinct from the slide-level `eyebrow`: this is per-block and sits above an h3 / title in a card.
+ */
+export const tagBlockSchema = z.object({
+  type: z.literal("tag"),
+  text: z.string(),
+  color: accentColorKeySchema.optional(),
+});
+
 export const imageBlockSchema = z.object({
   type: z.literal("image"),
   src: z.string(),
@@ -182,6 +197,7 @@ const baseBlockSchemas = [
   chartBlockSchema,
   mermaidBlockSchema,
   tableBlockSchema,
+  tagBlockSchema,
 ] as const;
 
 /** All content block types except section (used inside section to prevent recursion) */
@@ -250,6 +266,9 @@ export const slideDensitySchema = z.enum(["compact", "default"]);
 /** Slide title (h2) size override. "small" tightens for content-heavy slides, "hero" enlarges for closing/section slides. */
 export const slideTitleSizeSchema = z.enum(["small", "default", "large", "hero"]);
 
+/** Slide subtitle size variant. Defaults to body (15px); "big" matches reveal.js .big.muted ≈ 22px. */
+export const slideSubtitleSizeSchema = z.enum(["default", "big", "lead"]);
+
 /** Common slide properties shared across all layouts */
 const slideBaseFields = {
   accentColor: accentColorKeySchema.optional(),
@@ -260,6 +279,8 @@ const slideBaseFields = {
   density: slideDensitySchema.optional(),
   /** Optional override for the slide title (h2) size. Affects layouts that go through slideHeader / centeredSlideHeader. */
   titleSize: slideTitleSizeSchema.optional(),
+  /** Optional override for the slide subtitle size. Defaults to body (15px). */
+  subtitleSize: slideSubtitleSizeSchema.optional(),
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -634,6 +655,9 @@ export type BulletIcon = z.infer<typeof bulletIconSchema>;
 export type TextSize = z.infer<typeof textSizeSchema>;
 export type SlideDensity = z.infer<typeof slideDensitySchema>;
 export type SlideTitleSize = z.infer<typeof slideTitleSizeSchema>;
+export type SlideSubtitleSize = z.infer<typeof slideSubtitleSizeSchema>;
+export type SlideCardStyle = z.infer<typeof slideCardStyleSchema>;
+export type TagBlock = z.infer<typeof tagBlockSchema>;
 export type SlideBrandingLogo = z.infer<typeof slideBrandingLogoSchema>;
 export type SlideBranding = z.infer<typeof slideBrandingSchema>;
 export type MulmoSlideMedia = z.infer<typeof mulmoSlideMediaSchema>;

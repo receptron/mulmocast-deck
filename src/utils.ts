@@ -220,6 +220,13 @@ const TITLE_SIZE_CLS: Record<"small" | "default" | "large" | "hero", string> = {
   hero: "text-[64px]",
 };
 
+/** Subtitle font-size by variant. Default keeps the original 15px; bigger variants align with the reveal.js .big/.lead helpers. */
+const SUBTITLE_SIZE_CLS: Record<"default" | "big" | "lead", string> = {
+  default: "text-[15px]",
+  lead: "text-[17px]",
+  big: "text-[22px]",
+};
+
 /** Render header text elements (stepLabel + title + subtitle) without wrapping div */
 export const renderHeaderText = (data: {
   accentColor?: string;
@@ -228,6 +235,7 @@ export const renderHeaderText = (data: {
   subtitle?: string;
   eyebrow?: { label: string; color?: string };
   titleSize?: "small" | "default" | "large" | "hero";
+  subtitleSize?: "default" | "big" | "lead";
 }): string => {
   const accent = resolveAccent(data.accentColor);
   const lines: string[] = [];
@@ -239,7 +247,8 @@ export const renderHeaderText = (data: {
   const titleCls = TITLE_SIZE_CLS[data.titleSize ?? "default"];
   lines.push(`<h2 class="${titleCls} leading-tight font-title font-bold text-d-text">${renderInlineMarkup(data.title)}</h2>`);
   if (data.subtitle) {
-    lines.push(`<p class="text-[15px] text-d-dim mt-2 font-body">${renderInlineMarkup(data.subtitle)}</p>`);
+    const subtitleCls = SUBTITLE_SIZE_CLS[data.subtitleSize ?? "default"];
+    lines.push(`<p class="${subtitleCls} text-d-dim mt-2 font-body">${renderInlineMarkup(data.subtitle)}</p>`);
   }
   return lines.join("\n");
 };
@@ -252,6 +261,7 @@ export const slideHeader = (data: {
   subtitle?: string;
   eyebrow?: { label: string; color?: string };
   titleSize?: "small" | "default" | "large" | "hero";
+  subtitleSize?: "default" | "big" | "lead";
 }): string => {
   const accent = resolveAccent(data.accentColor);
   return [accentBar(accent), `<div class="px-12 pt-5 shrink-0">`, renderHeaderText(data), `</div>`].join("\n");
@@ -265,6 +275,7 @@ export const centeredSlideHeader = (data: {
   subtitle?: string;
   eyebrow?: { label: string; color?: string };
   titleSize?: "small" | "default" | "large" | "hero";
+  subtitleSize?: "default" | "big" | "lead";
 }): string => {
   const accent = resolveAccent(data.accentColor);
   return [accentBar(accent), `<div class="flex-1 flex flex-col justify-center px-12 min-h-0">`, renderHeaderText(data)].join("\n");

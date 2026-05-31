@@ -100,9 +100,17 @@ export const renderContentBlock = (block: ContentBlock): string => {
       return renderSection(block);
     case "table":
       return renderTableBlock(block);
+    case "tag":
+      return renderTag(block);
     default:
       return `<p class="text-sm text-d-muted font-body">[unknown block type]</p>`;
   }
+};
+
+/** Render a card-internal accent tag (small uppercase label, sits above an h3). Matches reveal.js .tag. */
+const renderTag = (block: ContentBlock & { type: "tag" }): string => {
+  const color = c(block.color || "primary");
+  return `<span class="text-xs font-bold uppercase tracking-[0.12em] text-${color} font-accent">${renderInlineMarkup(block.text)}</span>`;
 };
 
 /** Render an array of content blocks to HTML */
