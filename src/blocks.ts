@@ -1,5 +1,5 @@
 import type { ContentBlock, BulletItem, SectionBlock, TableBlock, TableCellValue, TextSize } from "./schema.js";
-import { escapeHtml, c, generateSlideId, renderInlineMarkup, blockTitle, resolveChangeColor, resolveAccent } from "./utils.js";
+import { escapeHtml, c, generateSlideId, renderInlineMarkup, blockTitle, resolveChangeColor, resolveAccent, dp } from "./utils.js";
 
 /**
  * Map a TextSize variant to its Tailwind classes.
@@ -73,19 +73,24 @@ const renderTableBlock = (block: TableBlock): string => {
   return `<div class="overflow-auto">${blockTitle(block.title)}${renderTableCore(block.headers, block.rows, block.rowHeaders, block.striped)}</div>`;
 };
 
-/** Render a single content block to HTML */
-export const renderContentBlock = (block: ContentBlock): string => {
+/**
+ * Render a single content block to HTML.
+ * @param path - JSON path of this block in the source SlideLayout, used to emit `data-mulmo-path`
+ *               attributes on every editable text node. Optional for back-compat — empty paths
+ *               just suppress the attribute.
+ */
+export const renderContentBlock = (block: ContentBlock, path = ""): string => {
   switch (block.type) {
     case "text":
-      return renderText(block);
+      return renderText(block, path);
     case "bullets":
-      return renderBullets(block);
+      return renderBullets(block, path);
     case "code":
       return renderCode(block);
     case "callout":
-      return renderCallout(block);
+      return renderCallout(block, path);
     case "metric":
-      return renderMetric(block);
+      return renderMetric(block, path);
     case "divider":
       return renderDivider(block);
     case "image":
@@ -101,31 +106,32 @@ export const renderContentBlock = (block: ContentBlock): string => {
     case "table":
       return renderTableBlock(block);
     case "tag":
-      return renderTag(block);
+      return renderTag(block, path);
     default:
       return `<p class="text-sm text-d-muted font-body">[unknown block type]</p>`;
   }
 };
 
 /** Render a card-internal accent tag (small uppercase label, sits above an h3). Matches reveal.js .tag. */
-const renderTag = (block: ContentBlock & { type: "tag" }): string => {
+const renderTag = (block: ContentBlock & { type: "tag" }, path = ""): string => {
   const color = c(block.color || "primary");
-  return `<span class="text-xs font-bold uppercase tracking-[0.12em] text-${color} font-accent">${renderInlineMarkup(block.text)}</span>`;
+  return `<span class="text-xs font-bold uppercase tracking-[0.12em] text-${color} font-accent"${dp(path ? `${path}.text` : "")}>${renderInlineMarkup(block.text)}</span>`;
 };
 
 /** Render an array of content blocks to HTML */
-export const renderContentBlocks = (blocks: ContentBlock[]): string => {
-  return blocks.map(renderContentBlock).join("\n");
+export const renderContentBlocks = (blocks: ContentBlock[], basePath = ""): string => {
+  return blocks.map((b, i) => renderContentBlock(b, basePath ? `${basePath}[${i}]` : `content[${i}]`)).join("\n");
 };
 
 /** Render content blocks with fixed aspect-ratio container for image blocks (used in card layouts) */
-export const renderCardContentBlocks = (blocks: ContentBlock[]): string => {
+export const renderCardContentBlocks = (blocks: ContentBlock[], basePath = ""): string => {
   return blocks
-    .map((block) => {
+    .map((block, i) => {
+      const p = basePath ? `${basePath}[${i}]` : `content[${i}]`;
       if (block.type === "image") {
-        return `<div class="aspect-video shrink-0 overflow-hidden">${renderContentBlock(block)}</div>`;
+        return `<div class="aspect-video shrink-0 overflow-hidden">${renderContentBlock(block, p)}</div>`;
       }
-      return renderContentBlock(block);
+      return renderContentBlock(block, p);
     })
     .join("\n");
 };
@@ -143,7 +149,7 @@ const resolveAlign = (align: string | undefined): string => {
   return "";
 };
 
-const renderText = (block: ContentBlock & { type: "text" }): string => {
+const renderText = (block: ContentBlock & { type: "text" }, path = ""): string => {
   // Resolution order for size: explicit numeric `fontSize` (legacy) wins over new `size` variant.
   const legacyXl = block.fontSize !== undefined && block.fontSize >= 18;
   const style = TEXT_SIZE_STYLES[block.size ?? "default"];
@@ -152,7 +158,7 @@ const renderText = (block: ContentBlock & { type: "text" }): string => {
   const colorCls = explicitColor ?? style.colorCls ?? "text-d-muted";
   const bold = block.bold ? "font-bold" : "";
   const alignCls = resolveAlign(block.align);
-  return `<p class="${sizeCls} ${colorCls} ${bold} ${alignCls} font-body leading-relaxed">${renderInlineMarkup(block.value)}</p>`;
+  return `<p class="${sizeCls} ${colorCls} ${bold} ${alignCls} font-body leading-relaxed"${dp(path ? `${path}.value` : "")}>${renderInlineMarkup(block.value)}</p>`;
 };
 
 /** Extract text from a bullet item (string or object) */
@@ -184,7 +190,7 @@ const resolveBulletSize = (block: ContentBlock & { type: "bullets" }, item: Bull
   return block.size ?? "default";
 };
 
-const renderBullets = (block: ContentBlock & { type: "bullets" }): string => {
+const renderBullets = (block: ContentBlock & { type: "bullets" }, path = ""): string => {
   const tag = block.ordered ? "ol" : "ul";
   const blockStyle = TEXT_SIZE_STYLES[block.size ?? "default"];
   const items = block.items
@@ -200,7 +206,9 @@ const renderBullets = (block: ContentBlock & { type: "bullets" }): string => {
       // Emit per-item classes only when they differ from the block-level style so output stays compact in the common case.
       const itemCls =
         itemStyle.fontCls === blockStyle.fontCls && itemStyle.colorCls === blockStyle.colorCls ? "" : ` ${itemStyle.fontCls} ${itemStyle.colorCls}`;
-      return `  <li class="flex flex-col gap-1${itemCls}"><div class="flex gap-2">${markerHtml}<span>${renderInlineMarkup(text)}</span></div>${subHtml}</li>`;
+      // For string items, the editable target is `path.items[i]`. For object items, it's `path.items[i].text`.
+      const itemPath = path ? (typeof item === "string" ? `${path}.items[${i}]` : `${path}.items[${i}].text`) : "";
+      return `  <li class="flex flex-col gap-1${itemCls}"><div class="flex gap-2">${markerHtml}<span${dp(itemPath)}>${renderInlineMarkup(text)}</span></div>${subHtml}</li>`;
     })
     .join("\n");
   return `<${tag} class="space-y-2 ${blockStyle.fontCls} ${blockStyle.colorCls} font-body">\n${items}\n</${tag}>`;
@@ -210,7 +218,7 @@ const renderCode = (block: ContentBlock & { type: "code" }): string => {
   return `<pre class="bg-[#0D1117] p-4 rounded text-sm font-mono text-d-dim leading-relaxed whitespace-pre-wrap">${escapeHtml(block.code)}</pre>`;
 };
 
-const renderCallout = (block: ContentBlock & { type: "callout" }): string => {
+const renderCallout = (block: ContentBlock & { type: "callout" }, path = ""): string => {
   const isQuote = block.style === "quote";
   const resolveBorderCls = (style: "quote" | "info" | "warning" | undefined): string => {
     if (style === "warning") return `border-l-2 border-${c("warning")}`;
@@ -222,19 +230,23 @@ const renderCallout = (block: ContentBlock & { type: "callout" }): string => {
   // Pre-Phase-4 default was `text-sm` (~14px). Map to the size variants only when explicitly requested.
   const sizeStyle = block.size ? TEXT_SIZE_STYLES[block.size] : { fontCls: "text-sm", colorCls: "text-d-muted" };
   const textCls = isQuote ? `italic ${sizeStyle.colorCls}` : sizeStyle.colorCls;
+  const dpLabel = dp(path ? `${path}.label` : "");
+  const dpText = dp(path ? `${path}.text` : "");
   const content = block.label
-    ? `<span class="font-bold text-${c(block.color || "warning")}">${renderInlineMarkup(block.label)}:</span> <span class="${textCls}">${renderInlineMarkup(block.text)}</span>`
-    : `<span class="${textCls}">${renderInlineMarkup(block.text)}</span>`;
+    ? `<span class="font-bold text-${c(block.color || "warning")}"${dpLabel}>${renderInlineMarkup(block.label)}:</span> <span class="${textCls}"${dpText}>${renderInlineMarkup(block.text)}</span>`
+    : `<span class="${textCls}"${dpText}>${renderInlineMarkup(block.text)}</span>`;
   return `<div class="${bg} ${borderCls} p-3 rounded ${sizeStyle.fontCls} font-body">${content}</div>`;
 };
 
-const renderMetric = (block: ContentBlock & { type: "metric" }): string => {
+const renderMetric = (block: ContentBlock & { type: "metric" }, path = ""): string => {
   const lines: string[] = [];
   lines.push(`<div class="text-center">`);
-  lines.push(`  <p class="text-4xl font-bold text-${c(resolveAccent(block.color))}">${renderInlineMarkup(block.value)}</p>`);
-  lines.push(`  <p class="text-sm text-d-dim mt-1">${renderInlineMarkup(block.label)}</p>`);
+  lines.push(`  <p class="text-4xl font-bold text-${c(resolveAccent(block.color))}"${dp(path ? `${path}.value` : "")}>${renderInlineMarkup(block.value)}</p>`);
+  lines.push(`  <p class="text-sm text-d-dim mt-1"${dp(path ? `${path}.label` : "")}>${renderInlineMarkup(block.label)}</p>`);
   if (block.change) {
-    lines.push(`  <p class="text-sm font-bold text-${c(resolveChangeColor(block.change))} mt-1">${escapeHtml(block.change)}</p>`);
+    lines.push(
+      `  <p class="text-sm font-bold text-${c(resolveChangeColor(block.change))} mt-1"${dp(path ? `${path}.change` : "")}>${escapeHtml(block.change)}</p>`,
+    );
   }
   lines.push(`</div>`);
   return lines.join("\n");
@@ -293,7 +305,7 @@ const renderSectionContent = (block: SectionBlock): string => {
     parts.push(`<p class="text-[15px] text-d-muted font-body">${renderInlineMarkup(block.text)}</p>`);
   }
   if (block.content) {
-    parts.push(block.content.map(renderContentBlock).join("\n"));
+    parts.push(block.content.map((b) => renderContentBlock(b)).join("\n"));
   }
   return parts.join("\n");
 };

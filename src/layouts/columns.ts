@@ -1,38 +1,39 @@
 import type { ColumnsSlide, Card } from "../schema.js";
-import { renderInlineMarkup, c, cardWrap, numBadge, iconSquare, slideHeader, renderOptionalCallout, resolveAccent, renderNumLabel } from "../utils.js";
+import { renderInlineMarkup, c, cardWrap, numBadge, iconSquare, slideHeader, renderOptionalCallout, resolveAccent, renderNumLabel, dp } from "../utils.js";
 import { renderCardContentBlocks } from "../blocks.js";
 
-const buildColumnCard = (col: Card): string => {
+const buildColumnCard = (col: Card, basePath: string): string => {
   const accent = resolveAccent(col.accentColor);
   const inner: string[] = [];
+  const dpTitle = dp(`${basePath}.title`);
 
   if (col.icon) {
     inner.push(`<div class="flex flex-col items-center mb-3">`);
     inner.push(`  ${iconSquare(col.icon, accent)}`);
     inner.push(`</div>`);
-    inner.push(`<h3 class="text-lg font-bold text-d-text text-center font-body">${renderInlineMarkup(col.title)}</h3>`);
+    inner.push(`<h3 class="text-lg font-bold text-d-text text-center font-body"${dpTitle}>${renderInlineMarkup(col.title)}</h3>`);
   } else if (col.num != null) {
     inner.push(`<div class="flex items-center gap-3 mb-1">`);
     inner.push(`  ${numBadge(col.num, accent)}`);
-    inner.push(`  <h3 class="text-lg font-bold text-d-text font-body">${renderInlineMarkup(col.title)}</h3>`);
+    inner.push(`  <h3 class="text-lg font-bold text-d-text font-body"${dpTitle}>${renderInlineMarkup(col.title)}</h3>`);
     inner.push(`</div>`);
   } else {
     if (col.label) {
-      inner.push(`<p class="text-sm font-bold text-${c(accent)} font-body">${renderInlineMarkup(col.label)}</p>`);
+      inner.push(`<p class="text-sm font-bold text-${c(accent)} font-body"${dp(`${basePath}.label`)}>${renderInlineMarkup(col.label)}</p>`);
     }
     const numPrefix = renderNumLabel(col.numLabel, accent);
-    inner.push(`<h3 class="text-2xl font-title font-bold text-d-text mt-1">${numPrefix}${renderInlineMarkup(col.title)}</h3>`);
+    inner.push(`<h3 class="text-2xl font-title font-bold text-d-text mt-1"${dpTitle}>${numPrefix}${renderInlineMarkup(col.title)}</h3>`);
   }
 
   if (col.content) {
     const centerCls = col.icon ? "text-center" : "";
     inner.push(`<div class="mt-4 space-y-4 flex-1 min-h-0 overflow-auto flex flex-col ${centerCls}">`);
-    inner.push(renderCardContentBlocks(col.content));
+    inner.push(renderCardContentBlocks(col.content, `${basePath}.content`));
     inner.push(`</div>`);
   }
 
   if (col.footer) {
-    inner.push(`<p class="text-sm text-d-dim font-body mt-auto pt-3">${renderInlineMarkup(col.footer)}</p>`);
+    inner.push(`<p class="text-sm text-d-dim font-body mt-auto pt-3"${dp(`${basePath}.footer`)}>${renderInlineMarkup(col.footer)}</p>`);
   }
 
   return cardWrap(accent, inner.join("\n"), "flex-1");
@@ -44,7 +45,7 @@ export const layoutColumns = (data: ColumnsSlide): string => {
 
   const colElements: string[] = [];
   cols.forEach((col, i) => {
-    colElements.push(buildColumnCard(col));
+    colElements.push(buildColumnCard(col, `columns[${i}]`));
     if (data.showArrows && i < cols.length - 1) {
       colElements.push(`<div class="flex items-center shrink-0"><span class="text-2xl text-d-dim">\u25B6</span></div>`);
     }
@@ -56,7 +57,7 @@ export const layoutColumns = (data: ColumnsSlide): string => {
 
   parts.push(renderOptionalCallout(data.callout));
   if (data.bottomText) {
-    parts.push(`<p class="text-center text-sm text-d-dim font-body pb-4">${renderInlineMarkup(data.bottomText)}</p>`);
+    parts.push(`<p class="text-center text-sm text-d-dim font-body pb-4"${dp("bottomText")}>${renderInlineMarkup(data.bottomText)}</p>`);
   }
 
   return parts.join("\n");

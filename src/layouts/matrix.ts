@@ -1,5 +1,5 @@
 import type { MatrixSlide } from "../schema.js";
-import { renderInlineMarkup, c, cardWrap, slideHeader, resolveAccent } from "../utils.js";
+import { renderInlineMarkup, c, cardWrap, slideHeader, resolveAccent, dp } from "../utils.js";
 import { renderContentBlocks } from "../blocks.js";
 
 export const layoutMatrix = (data: MatrixSlide): string => {
@@ -30,17 +30,20 @@ export const layoutMatrix = (data: MatrixSlide): string => {
       const idx = r * cols + ci;
       const cell = cells[idx] || { label: "" };
       const accent = resolveAccent(cell.accentColor);
+      const base = `cells[${idx}]`;
       const inner: string[] = [];
-      inner.push(`<h3 class="text-lg font-bold text-${c(accent)} font-body">${renderInlineMarkup(cell.label)}</h3>`);
+      inner.push(`<h3 class="text-lg font-bold text-${c(accent)} font-body"${dp(`${base}.label`)}>${renderInlineMarkup(cell.label)}</h3>`);
       if (cell.items) {
         inner.push(`<ul class="mt-2 space-y-1 text-sm text-d-muted font-body">`);
-        cell.items.forEach((item) => {
-          inner.push(`  <li class="flex gap-2"><span class="text-d-dim shrink-0">&bull;</span><span>${renderInlineMarkup(item)}</span></li>`);
+        cell.items.forEach((item, ii) => {
+          inner.push(
+            `  <li class="flex gap-2"><span class="text-d-dim shrink-0">&bull;</span><span${dp(`${base}.items[${ii}]`)}>${renderInlineMarkup(item)}</span></li>`,
+          );
         });
         inner.push(`</ul>`);
       }
       if (cell.content) {
-        inner.push(`<div class="mt-2 space-y-2">${renderContentBlocks(cell.content)}</div>`);
+        inner.push(`<div class="mt-2 space-y-2">${renderContentBlocks(cell.content, `${base}.content`)}</div>`);
       }
       parts.push(cardWrap(accent, inner.join("\n"), "flex-1"));
     });

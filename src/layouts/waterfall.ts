@@ -1,5 +1,5 @@
 import type { WaterfallSlide } from "../schema.js";
-import { renderInlineMarkup, c, slideHeader, renderOptionalCallout } from "../utils.js";
+import { renderInlineMarkup, c, slideHeader, renderOptionalCallout, dp } from "../utils.js";
 
 /** Height of the chart area as percentage of available space */
 const CHART_HEIGHT_PCT = 75;
@@ -36,7 +36,7 @@ export const layoutWaterfall = (data: WaterfallSlide): string => {
     parts.push(`  <div class="absolute left-1 right-1 bg-${c(color)} rounded-t" style="bottom: ${bottomPct}%; height: ${heightPct}%"></div>`);
     // Bottom label
     parts.push(
-      `  <p class="absolute bottom-0 w-full text-xs text-d-muted font-body text-center" style="transform: translateY(100%)">${renderInlineMarkup(item.label)}</p>`,
+      `  <p class="absolute bottom-0 w-full text-xs text-d-muted font-body text-center" style="transform: translateY(100%)"${dp(`items[${i}].label`)}>${renderInlineMarkup(item.label)}</p>`,
     );
     parts.push(`</div>`);
   });
