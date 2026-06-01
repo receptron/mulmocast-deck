@@ -336,6 +336,17 @@ Small uppercase accent label intended for use INSIDE cards. Distinct from the sl
 }
 ```
 
+## Editor anchors (0.6+ / 0.7+)
+
+Every rendered slide carries two convenience attributes that editor consumers can rely on. They're benign — browsers and renderers ignore unknown `data-*` attributes — so existing pipelines keep working unchanged.
+
+| Attribute | Where | Used for |
+|--|--|--|
+| `data-mulmo-path="<json.path>"` (0.6.0) | Every editable leaf text element (titles, subtitles, bullet items, stat values, callout labels, …) | Map a click in the rendered HTML back to the source `SlideLayout` JSON path. Enables click-to-edit / contenteditable round-trips. |
+| `data-mulmo-item-path="<json.path>"` (0.7.0) | Each list-item ROOT container (`<li>` for bullets, stat card, timeline step, manifesto line, columns / grid card) | Mark drag-reorderable items. Siblings share the same parent prefix so editors can validate sibling-only moves. |
+
+`@mulmocast/deck-web` uses both to ship in-iframe WYSIWYG editing + drag-and-drop reorder without a parsed AST.
+
 ## Design
 
 - **Data → HTML, no side effects.** Pure functions, easy to test and use anywhere.
@@ -347,7 +358,7 @@ Small uppercase accent label intended for use INSIDE cards. Distinct from the sl
 ## Consumers
 
 - [`mulmocast`](https://www.npmjs.com/package/mulmocast) — CLI uses `generateSlideHTML()` then snapshots to PNG with Puppeteer.
-- `@mulmocast/deck-web` *(WIP)* — Browser editor with live preview and schema-driven inspector.
+- [`@mulmocast/deck-web`](https://www.npmjs.com/package/@mulmocast/deck-web) — Browser editor with live preview, WYSIWYG click-to-edit, floating toolbar, and drag-and-drop reorder.
 
 ## License
 
