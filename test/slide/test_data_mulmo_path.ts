@@ -78,10 +78,7 @@ test("data-mulmo-path: manifesto emits items[i].title/description", () => {
   const slide = slideLayoutSchema.parse({
     layout: "manifesto",
     title: "Culture",
-    items: [
-      { title: "Ship daily", description: "small steps compound" },
-      { title: "Default to action" },
-    ],
+    items: [{ title: "Ship daily", description: "small steps compound" }, { title: "Default to action" }],
   });
   const html = generateSlideHTML(baseTheme, slide);
   assert.ok(/data-mulmo-path="items\[0\].title"/.test(html));
