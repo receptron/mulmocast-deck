@@ -1,6 +1,49 @@
-import type { SlideTheme, SlideLayout } from "./schema.js";
+import type { SlideTheme, SlideLayout, SlideIntro } from "./schema.js";
 import { escapeHtml, buildTailwindConfig, sanitizeHex, detectBlockTypes, isSafeCssBackground } from "./utils.js";
 import { renderSlideContent } from "./layouts/index.js";
+
+/** Keyframes + animation rule for each intro preset. Pure CSS — no JS, no transform hacks. */
+const INTRO_KEYFRAMES: Record<SlideIntro, string> = {
+  fade: "@keyframes mulmoIntroFade{from{opacity:0}to{opacity:1}}",
+  "fade-up": "@keyframes mulmoIntroFadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}",
+  "fade-down": "@keyframes mulmoIntroFadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}",
+  "slide-left": "@keyframes mulmoIntroSlideLeft{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}",
+  "slide-right": "@keyframes mulmoIntroSlideRight{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}",
+  "zoom-in": "@keyframes mulmoIntroZoomIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}",
+};
+
+const INTRO_NAMES: Record<SlideIntro, string> = {
+  fade: "mulmoIntroFade",
+  "fade-up": "mulmoIntroFadeUp",
+  "fade-down": "mulmoIntroFadeDown",
+  "slide-left": "mulmoIntroSlideLeft",
+  "slide-right": "mulmoIntroSlideRight",
+  "zoom-in": "mulmoIntroZoomIn",
+};
+
+/** Cap on how many staggered children get a generated nth-child rule — covers every realistic list size. */
+const STAGGER_MAX_ITEMS = 40;
+
+/**
+ * Build the `<style>` block for a slide's intro animation.
+ * Whole-slide form: a single rule on `.mulmo-intro` runs the chosen preset once.
+ * Staggered form: items inside `.mulmo-stagger` (anything with `data-mulmo-item-path`) run the
+ * same preset sequentially via `:nth-child(n)` delays; the slide root itself is static.
+ */
+const buildIntroCss = (intro: SlideIntro, staggerMs: number | undefined): string => {
+  const kf = INTRO_KEYFRAMES[intro];
+  const name = INTRO_NAMES[intro];
+  const useStagger = staggerMs !== undefined && staggerMs > 0;
+  if (!useStagger) {
+    return `\n<style>${kf} .mulmo-intro{animation:${name} .5s cubic-bezier(.22,.61,.36,1) both}</style>`;
+  }
+  const delays: string[] = [];
+  for (let i = 0; i < STAGGER_MAX_ITEMS; i++) {
+    // `:nth-child(n)` is 1-indexed; index i maps to delay i * staggerMs.
+    delays.push(`.mulmo-stagger [data-mulmo-item-path]:nth-child(${i + 1}){animation-delay:${i * staggerMs}ms}`);
+  }
+  return `\n<style>${kf} .mulmo-stagger [data-mulmo-item-path]{animation:${name} .5s cubic-bezier(.22,.61,.36,1) both;animation-delay:0ms}${delays.join("")}</style>`;
+};
 
 /** Pre-resolved branding data (all sources converted to data URLs) */
 export type ResolvedBranding = {
@@ -121,6 +164,14 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
       : "";
   const cardStyleCls = theme.cardStyle === "glass" ? " card-glass" : "";
 
+  // Intro animation: opt-in CSS entrance preset. Without `staggerMs`, the whole slide animates as
+  // one block via `.mulmo-intro` on the slide root. With `staggerMs`, items in list-based layouts
+  // (anything with [data-mulmo-item-path]) animate sequentially via `.mulmo-stagger` + nth-child
+  // delays; the slide root itself stays static so the two animations don't compound.
+  const introCss = slide.intro ? buildIntroCss(slide.intro, slide.staggerMs) : "";
+  const useStagger = slide.intro && slide.staggerMs !== undefined && slide.staggerMs > 0;
+  const introCls = !slide.intro ? "" : useStagger ? " mulmo-stagger" : " mulmo-intro";
+
   const footer = slideStyle?.footer ? `<p class="absolute bottom-2 right-4 text-xs text-d-dim font-body">${escapeHtml(slideStyle.footer)}</p>` : "";
   const referenceHtml = reference
     ? `<div class="mt-auto px-4 pb-2"><p class="text-sm text-d-muted font-body opacity-80">${escapeHtml(reference)}</p></div>`
@@ -140,10 +191,10 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
 ${cdnScripts}
 <style>
   html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
-</style>${titleGradientCss}${densityCss}${cardGlassCss}
+</style>${titleGradientCss}${densityCss}${cardGlassCss}${introCss}
 </head>
 <body class="h-full">
-<div class="relative overflow-hidden ${bgCls}${densityCls}${cardStyleCls} w-full h-full flex flex-col"${inlineStyle}>
+<div class="relative overflow-hidden ${bgCls}${densityCls}${cardStyleCls}${introCls} w-full h-full flex flex-col"${inlineStyle}>
 ${brandingBg}
 <div class="relative z-[1] flex flex-col flex-1">
 ${content}

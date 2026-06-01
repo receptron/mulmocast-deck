@@ -81,5 +81,6 @@ export type {
   SlideDensity,
   SlideTitleSize,
   SlideSubtitleSize,
+  SlideIntro,
   SlideCardStyle,
 } from "./schema.js";
