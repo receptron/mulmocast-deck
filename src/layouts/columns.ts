@@ -36,7 +36,7 @@ const buildColumnCard = (col: Card, basePath: string): string => {
     inner.push(`<p class="text-sm text-d-dim font-body mt-auto pt-3"${dp(`${basePath}.footer`)}>${renderInlineMarkup(col.footer)}</p>`);
   }
 
-  return cardWrap(accent, inner.join("\n"), "flex-1");
+  return cardWrap(accent, inner.join("\n"), "flex-1", basePath);
 };
 
 export const layoutColumns = (data: ColumnsSlide): string => {

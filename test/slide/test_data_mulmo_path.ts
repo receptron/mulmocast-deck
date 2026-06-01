@@ -192,6 +192,68 @@ test("data-mulmo-path: columns card title / label / numLabel", () => {
   assert.ok(/data-mulmo-path="columns\[0\].label"/.test(html));
 });
 
+// ─── data-mulmo-item-path: drag-reorder anchors on list-item containers ───
+
+test("data-mulmo-item-path: bullets li", () => {
+  const slide = slideLayoutSchema.parse({
+    layout: "columns",
+    title: "T",
+    columns: [{ title: "C", content: [{ type: "bullets", items: ["a", "b"] }] }],
+  });
+  const html = generateSlideHTML(baseTheme, slide);
+  assert.ok(/<li[^>]*data-mulmo-item-path="columns\[0\].content\[0\].items\[0\]"/.test(html));
+  assert.ok(/<li[^>]*data-mulmo-item-path="columns\[0\].content\[0\].items\[1\]"/.test(html));
+});
+
+test("data-mulmo-item-path: stats card", () => {
+  const slide = slideLayoutSchema.parse({
+    layout: "stats",
+    title: "T",
+    stats: [
+      { value: "1", label: "A" },
+      { value: "2", label: "B" },
+    ],
+  });
+  const html = generateSlideHTML(baseTheme, slide);
+  assert.ok(/data-mulmo-item-path="stats\[0\]"/.test(html));
+  assert.ok(/data-mulmo-item-path="stats\[1\]"/.test(html));
+});
+
+test("data-mulmo-item-path: timeline step", () => {
+  const slide = slideLayoutSchema.parse({
+    layout: "timeline",
+    title: "T",
+    items: [
+      { date: "Q1", title: "K" },
+      { date: "Q2", title: "M" },
+    ],
+  });
+  const html = generateSlideHTML(baseTheme, slide);
+  assert.ok(/data-mulmo-item-path="items\[0\]"/.test(html));
+  assert.ok(/data-mulmo-item-path="items\[1\]"/.test(html));
+});
+
+test("data-mulmo-item-path: manifesto line", () => {
+  const slide = slideLayoutSchema.parse({ layout: "manifesto", title: "T", items: [{ title: "A" }, { title: "B" }] });
+  const html = generateSlideHTML(baseTheme, slide);
+  assert.ok(/data-mulmo-item-path="items\[0\]"/.test(html));
+  assert.ok(/data-mulmo-item-path="items\[1\]"/.test(html));
+});
+
+test("data-mulmo-item-path: columns card", () => {
+  const slide = slideLayoutSchema.parse({ layout: "columns", title: "T", columns: [{ title: "A" }, { title: "B" }] });
+  const html = generateSlideHTML(baseTheme, slide);
+  assert.ok(/data-mulmo-item-path="columns\[0\]"/.test(html));
+  assert.ok(/data-mulmo-item-path="columns\[1\]"/.test(html));
+});
+
+test("data-mulmo-item-path: grid item", () => {
+  const slide = slideLayoutSchema.parse({ layout: "grid", title: "T", items: [{ title: "A" }, { title: "B" }] });
+  const html = generateSlideHTML(baseTheme, slide);
+  assert.ok(/data-mulmo-item-path="items\[0\]"/.test(html));
+  assert.ok(/data-mulmo-item-path="items\[1\]"/.test(html));
+});
+
 // ─── safety: empty path = no attribute ───
 
 test("data-mulmo-path: top-level renderContentBlock without path emits no attribute (back-compat)", () => {

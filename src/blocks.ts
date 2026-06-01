@@ -1,5 +1,5 @@
 import type { ContentBlock, BulletItem, SectionBlock, TableBlock, TableCellValue, TextSize } from "./schema.js";
-import { escapeHtml, c, generateSlideId, renderInlineMarkup, blockTitle, resolveChangeColor, resolveAccent, dp } from "./utils.js";
+import { escapeHtml, c, generateSlideId, renderInlineMarkup, blockTitle, resolveChangeColor, resolveAccent, dp, di } from "./utils.js";
 
 /**
  * Map a TextSize variant to its Tailwind classes.
@@ -208,7 +208,10 @@ const renderBullets = (block: ContentBlock & { type: "bullets" }, path = ""): st
         itemStyle.fontCls === blockStyle.fontCls && itemStyle.colorCls === blockStyle.colorCls ? "" : ` ${itemStyle.fontCls} ${itemStyle.colorCls}`;
       // For string items, the editable target is `path.items[i]`. For object items, it's `path.items[i].text`.
       const itemPath = path ? (typeof item === "string" ? `${path}.items[${i}]` : `${path}.items[${i}].text`) : "";
-      return `  <li class="flex flex-col gap-1${itemCls}"><div class="flex gap-2">${markerHtml}<span${dp(itemPath)}>${renderInlineMarkup(text)}</span></div>${subHtml}</li>`;
+      // The bullet `<li>` itself carries `data-mulmo-item-path` so editors can drag-reorder; the inner
+      // span keeps `data-mulmo-path` for the text edit target.
+      const itemRoot = path ? `${path}.items[${i}]` : "";
+      return `  <li class="flex flex-col gap-1${itemCls}"${di(itemRoot)}><div class="flex gap-2">${markerHtml}<span${dp(itemPath)}>${renderInlineMarkup(text)}</span></div>${subHtml}</li>`;
     })
     .join("\n");
   return `<${tag} class="space-y-2 ${blockStyle.fontCls} ${blockStyle.colorCls} font-body">\n${items}\n</${tag}>`;

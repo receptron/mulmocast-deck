@@ -1,5 +1,5 @@
 import type { TimelineSlide } from "../schema.js";
-import { renderInlineMarkup, c, resolveItemColor, centeredSlideHeader, dp } from "../utils.js";
+import { renderInlineMarkup, c, resolveItemColor, centeredSlideHeader, dp, di } from "../utils.js";
 
 export const layoutTimeline = (data: TimelineSlide): string => {
   const parts: string[] = [];
@@ -19,7 +19,7 @@ export const layoutTimeline = (data: TimelineSlide): string => {
     const dotInner = item.done ? "bg-d-text" : `bg-${c(color)}`;
     const hotRing = item.hot ? ` ring-2 ring-${c(color)} ring-offset-2 ring-offset-d-bg` : "";
     const base = `items[${i}]`;
-    parts.push(`<div class="flex-1 flex flex-col items-center text-center relative z-10">`);
+    parts.push(`<div class="flex-1 flex flex-col items-center text-center relative z-10"${di(base)}>`);
     parts.push(`  <div class="w-10 h-10 rounded-full ${dotBorder} flex items-center justify-center shadow-lg${hotRing}">`);
     parts.push(`    <div class="w-4 h-4 rounded-full ${dotInner}"></div>`);
     parts.push(`  </div>`);
