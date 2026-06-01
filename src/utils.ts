@@ -19,6 +19,17 @@ export const escapeHtml = (s: string): string => {
  */
 export const dp = (path: string): string => (path ? ` data-mulmo-path="${escapeHtml(path)}"` : "");
 
+/**
+ * Emit a `data-mulmo-item-path="..."` attribute (with leading space) for a drag-reorderable
+ * list-item container (e.g. a `<li>` in a bullets block, a stats card, a timeline step, a
+ * manifesto line, a columns card, a grid item). The path identifies the item ROOT in the
+ * SlideLayout JSON — siblings (items in the same parent array) share the same parent prefix.
+ *
+ * Distinct from `data-mulmo-path` (which points at a leaf editable text). This attribute is
+ * used by editor UIs to wire drag-and-drop reorder.
+ */
+export const di = (path: string): string => (path ? ` data-mulmo-item-path="${escapeHtml(path)}"` : "");
+
 /** Compose a child path: `dpJoin("columns[0]", "title")` → `columns[0].title`. */
 export const dpJoin = (base: string, segment: string): string => (base ? `${base}.${segment}` : segment);
 
@@ -174,9 +185,9 @@ export const iconSquare = (icon: string, colorKey: string): string => {
 </div>`;
 };
 
-/** Render a card wrapper with accent top bar */
-export const cardWrap = (accentColor: string, innerHtml: string, extraClass?: string): string => {
-  return `<div class="bg-d-card rounded-lg shadow-lg overflow-hidden flex flex-col min-h-0 ${sanitizeCssClass(extraClass || "")}">
+/** Render a card wrapper with accent top bar. Pass `itemPath` to emit a drag-reorder anchor. */
+export const cardWrap = (accentColor: string, innerHtml: string, extraClass?: string, itemPath?: string): string => {
+  return `<div class="bg-d-card rounded-lg shadow-lg overflow-hidden flex flex-col min-h-0 ${sanitizeCssClass(extraClass || "")}"${itemPath ? ` data-mulmo-item-path="${escapeHtml(itemPath)}"` : ""}>
   ${accentBar(accentColor)}
   <div class="p-5 flex flex-col flex-1 min-h-0 overflow-hidden">
 ${innerHtml}

@@ -39,7 +39,7 @@ export const layoutGrid = (data: GridSlide): string => {
     // Asymmetric grids: items can span multiple columns. Class names are mapped explicitly so the JIT compiler keeps them.
     const SPAN_CLS: Record<number, string> = { 1: "", 2: "col-span-2", 3: "col-span-3", 4: "col-span-4" };
     const spanCls = item.span && item.span > 1 ? SPAN_CLS[item.span] || "" : "";
-    parts.push(cardWrap(itemAccent, inner.join("\n"), spanCls));
+    parts.push(cardWrap(itemAccent, inner.join("\n"), spanCls, base));
   });
 
   parts.push(`</div>`);

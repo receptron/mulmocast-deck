@@ -1,10 +1,10 @@
 import type { ManifestoSlide, ManifestoLine } from "../schema.js";
-import { renderInlineMarkup, c, slideHeader, renderOptionalCallout, resolveItemColor, dp } from "../utils.js";
+import { renderInlineMarkup, c, slideHeader, renderOptionalCallout, resolveItemColor, dp, di } from "../utils.js";
 
 const buildManifestoCard = (line: ManifestoLine, slideAccent: string | undefined, basePath: string): string => {
   const color = resolveItemColor(line.accentColor, slideAccent);
   const parts: string[] = [];
-  parts.push(`<div class="relative bg-d-card rounded-lg shadow-md overflow-hidden flex flex-col">`);
+  parts.push(`<div class="relative bg-d-card rounded-lg shadow-md overflow-hidden flex flex-col"${di(basePath)}>`);
   parts.push(`  <div class="absolute left-0 top-0 bottom-0 w-1 bg-${c(color)}"></div>`);
   parts.push(`  <div class="px-5 py-4 pl-6 flex-1">`);
   parts.push(`    <h3 class="text-lg font-bold text-d-text font-body leading-snug"${dp(`${basePath}.title`)}>${renderInlineMarkup(line.title)}</h3>`);

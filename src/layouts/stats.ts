@@ -1,5 +1,5 @@
 import type { StatsSlide } from "../schema.js";
-import { renderInlineMarkup, c, resolveItemColor, resolveChangeColor, centeredSlideHeader, renderOptionalCallout, dp } from "../utils.js";
+import { renderInlineMarkup, c, resolveItemColor, resolveChangeColor, centeredSlideHeader, renderOptionalCallout, dp, di } from "../utils.js";
 
 export const layoutStats = (data: StatsSlide): string => {
   const stats = data.stats || [];
@@ -13,7 +13,7 @@ export const layoutStats = (data: StatsSlide): string => {
   stats.forEach((stat, i) => {
     const color = resolveItemColor(stat.color, data.accentColor);
     const base = `stats[${i}]`;
-    parts.push(`<div class="flex-1 bg-d-card rounded-lg shadow-lg p-10 text-center">`);
+    parts.push(`<div class="flex-1 bg-d-card rounded-lg shadow-lg p-10 text-center"${di(base)}>`);
     parts.push(`  <div class="h-[3px] bg-${c(color)} rounded-full w-12 mx-auto mb-6"></div>`);
     if (stat.numLabel) {
       parts.push(
