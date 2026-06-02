@@ -269,6 +269,21 @@ export const slideTitleSizeSchema = z.enum(["small", "default", "large", "hero"]
 /** Slide subtitle size variant. Defaults to body (15px); "big" matches reveal.js .big.muted ≈ 22px. */
 export const slideSubtitleSizeSchema = z.enum(["default", "big", "lead"]);
 
+/**
+ * Entrance animation preset for a slide. Pure CSS — no JS, no compositor stalls.
+ *   fade        — opacity 0 → 1
+ *   fade-up     — opacity + translateY(20 → 0)
+ *   fade-down   — opacity + translateY(-20 → 0)
+ *   slide-left  — opacity + translateX(40 → 0)
+ *   slide-right — opacity + translateX(-40 → 0)
+ *   zoom-in     — opacity + scale(0.92 → 1)
+ *
+ * When `staggerMs` is also set on the slide, items in list-based layouts (stats / timeline /
+ * manifesto / columns / grid / bullets) animate sequentially using this preset instead of the
+ * whole slide animating as one block.
+ */
+export const slideIntroSchema = z.enum(["fade", "fade-up", "fade-down", "slide-left", "slide-right", "zoom-in"]);
+
 /** Common slide properties shared across all layouts */
 const slideBaseFields = {
   accentColor: accentColorKeySchema.optional(),
@@ -281,6 +296,10 @@ const slideBaseFields = {
   titleSize: slideTitleSizeSchema.optional(),
   /** Optional override for the slide subtitle size. Defaults to body (15px). */
   subtitleSize: slideSubtitleSizeSchema.optional(),
+  /** Entrance animation preset. CSS-driven; consumers can disable via `animation-name: none`. */
+  intro: slideIntroSchema.optional(),
+  /** When set, items in list-based layouts pop in sequentially with this delay (ms). Requires `intro`. */
+  staggerMs: z.number().int().min(0).max(2000).optional(),
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -656,6 +675,7 @@ export type TextSize = z.infer<typeof textSizeSchema>;
 export type SlideDensity = z.infer<typeof slideDensitySchema>;
 export type SlideTitleSize = z.infer<typeof slideTitleSizeSchema>;
 export type SlideSubtitleSize = z.infer<typeof slideSubtitleSizeSchema>;
+export type SlideIntro = z.infer<typeof slideIntroSchema>;
 export type SlideCardStyle = z.infer<typeof slideCardStyleSchema>;
 export type TagBlock = z.infer<typeof tagBlockSchema>;
 export type SlideBrandingLogo = z.infer<typeof slideBrandingLogoSchema>;
