@@ -1,0 +1,26 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  // Public API entry is src/index.ts (package.json "main": lib/index.js is its build output).
+  // knip auto-detects src/index.ts as a default entry, so it is not listed here (listing it
+  // triggers a "redundant entry" hint). Every test/**/test_*.ts is a standalone node:test file
+  // run via tsx that exercises the library, so they are entry points, not analyzed source.
+  "entry": ["test/**/*.ts"],
+  "project": ["src/**/*.ts"],
+  "ignoreExportsUsedInFile": true,
+  "includeEntryExports": false,
+  "rules": {
+    // Warn mode: every rule is "warn" (reported, exit 0) or "off". Nothing gates CI here.
+    "files": "warn",
+    "dependencies": "warn",
+    "devDependencies": "warn",
+    "unlisted": "warn",
+    "exports": "warn",
+    "types": "warn",
+    "unresolved": "off",
+    "binaries": "off",
+    "nsExports": "off",
+    "nsTypes": "off",
+    "enumMembers": "off",
+    "duplicates": "off",
+  },
+}
