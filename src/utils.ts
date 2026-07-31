@@ -33,11 +33,6 @@ export const di = (path: string): string => (path ? ` data-mulmo-item-path="${es
 /** Compose a child path: `dpJoin("columns[0]", "title")` → `columns[0].title`. */
 export const dpJoin = (base: string, segment: string): string => (base ? `${base}.${segment}` : segment);
 
-/** Escape HTML and convert newlines to <br> */
-export const nl2br = (s: string): string => {
-  return escapeHtml(s).replace(/\n/g, "<br>");
-};
-
 /** Valid accent color keys for inline markup */
 const inlineColorKeys = new Set(["primary", "accent", "success", "warning", "danger", "info", "highlight"]);
 
@@ -253,19 +248,18 @@ const SUBTITLE_SIZE_CLS: Record<"default" | "big" | "lead", string> = {
   big: "text-[22px]",
 };
 
+type SlideHeaderData = {
+  accentColor?: string;
+  stepLabel?: string;
+  title: string;
+  subtitle?: string;
+  eyebrow?: { label: string; color?: string };
+  titleSize?: "small" | "default" | "large" | "hero";
+  subtitleSize?: "default" | "big" | "lead";
+};
+
 /** Render header text elements (stepLabel + title + subtitle) without wrapping div */
-export const renderHeaderText = (
-  data: {
-    accentColor?: string;
-    stepLabel?: string;
-    title: string;
-    subtitle?: string;
-    eyebrow?: { label: string; color?: string };
-    titleSize?: "small" | "default" | "large" | "hero";
-    subtitleSize?: "default" | "big" | "lead";
-  },
-  basePath = "",
-): string => {
+export const renderHeaderText = (data: SlideHeaderData, basePath = ""): string => {
   const accent = resolveAccent(data.accentColor);
   const lines: string[] = [];
   const eyebrowHtml = renderEyebrow(data.eyebrow, accent, basePath);
@@ -283,29 +277,13 @@ export const renderHeaderText = (
 };
 
 /** Render the common slide header (accent bar + title + subtitle, plus optional eyebrow pill) */
-export const slideHeader = (data: {
-  accentColor?: string;
-  stepLabel?: string;
-  title: string;
-  subtitle?: string;
-  eyebrow?: { label: string; color?: string };
-  titleSize?: "small" | "default" | "large" | "hero";
-  subtitleSize?: "default" | "big" | "lead";
-}): string => {
+export const slideHeader = (data: SlideHeaderData): string => {
   const accent = resolveAccent(data.accentColor);
   return [accentBar(accent), `<div class="px-12 pt-8 shrink-0">`, renderHeaderText(data), `</div>`].join("\n");
 };
 
 /** Render accent bar + vertically-centered wrapper with header text (used by stats, timeline) */
-export const centeredSlideHeader = (data: {
-  accentColor?: string;
-  stepLabel?: string;
-  title: string;
-  subtitle?: string;
-  eyebrow?: { label: string; color?: string };
-  titleSize?: "small" | "default" | "large" | "hero";
-  subtitleSize?: "default" | "big" | "lead";
-}): string => {
+export const centeredSlideHeader = (data: SlideHeaderData): string => {
   const accent = resolveAccent(data.accentColor);
   return [accentBar(accent), `<div class="flex-1 flex flex-col justify-center px-12 min-h-0">`, renderHeaderText(data)].join("\n");
 };
