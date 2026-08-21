@@ -167,7 +167,10 @@ test("slideUtilityCss covers every d-* class the source emits", () => {
     .map((f) => stripComments(readFileSync(f, "utf8")))
     .join("\n");
 
-  const literal = [...source.matchAll(/\b([a-z][a-z-]*)-d-([a-z]+)(?:\/(\d+))?/g)].map(([, prefix, seg, pct]) =>
+  // Segments must be matched case-sensitively as [a-zA-Z]: an earlier `[a-z]+` stopped at the
+  // capital in `border-d-textDim/30` and checked `.border-d-text{`, which exists — so a class
+  // naming a colour that does not exist read as covered.
+  const literal = [...source.matchAll(/\b([a-z][a-z-]*)-d-([a-zA-Z]+)(?:\/(\d+))?/g)].map(([, prefix, seg, pct]) =>
     pct ? `.${prefix}-d-${seg}\\/${pct}{` : `.${prefix}-d-${seg}{`,
   );
   const missing = [...new Set(literal)].filter((sel) => !slideUtilityCss.includes(sel));
@@ -180,6 +183,15 @@ test("slideUtilityCss covers every d-* class the source emits", () => {
   const allSegments = [...new Set([...slideUtilityCss.matchAll(/\.bg-d-([a-z]+)\{/g)].map(([, s]) => s))];
   assert.ok(allSegments.length >= 13, `expected 13 colour segments, found ${allSegments.length}`);
   dynamicPrefixes.forEach((prefix) => allSegments.forEach((seg) => assert.ok(slideUtilityCss.includes(`.${prefix}-d-${seg}{`), `missing .${prefix}-d-${seg}`)));
+
+  // A dynamic class can also carry an alpha suffix (`bg-${color}/10` in renderEyebrow).
+  // Every segment needs a rule at that prefix and percentage, or the colour silently
+  // fails to apply — which is exactly how two such classes shipped broken.
+  const dynamicAlpha = [...source.matchAll(/\b([a-z][a-z-]*)-\$\{[^}]+\}\/(\d+)/g)].map(([, prefix, pct]) => [prefix, pct]);
+  assert.ok(dynamicAlpha.length > 0, "expected at least one dynamic alpha class");
+  dynamicAlpha.forEach(([prefix, pct]) =>
+    allSegments.forEach((seg) => assert.ok(slideUtilityCss.includes(`.${prefix}-d-${seg}\\/${pct}{`), `missing .${prefix}-d-${seg}/${pct}`)),
+  );
 });
 
 test("slideUtilityCss covers every font-* class the source emits", () => {

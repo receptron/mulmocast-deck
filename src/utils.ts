@@ -225,7 +225,7 @@ export const renderCalloutBar = (obj: { text: string; label?: string; color?: st
 export const renderEyebrow = (eyebrow: { label: string; color?: string } | undefined, defaultColor?: string, basePath = ""): string => {
   if (!eyebrow) return "";
   const color = c(eyebrow.color ?? defaultColor ?? "primary");
-  return `<span class="inline-flex items-center gap-2 font-accent font-extrabold uppercase tracking-[0.16em] text-[12px] px-3 py-1 rounded-full border border-d-textDim/30 bg-${color}/10 text-${color}"${dp(dpJoin(basePath, "eyebrow.label"))}>${renderInlineMarkup(eyebrow.label)}</span>`;
+  return `<span class="inline-flex items-center gap-2 font-accent font-extrabold uppercase tracking-[0.16em] text-[12px] px-3 py-1 rounded-full border border-d-dim/30 bg-${color}/10 text-${color}"${dp(dpJoin(basePath, "eyebrow.label"))}>${renderInlineMarkup(eyebrow.label)}</span>`;
 };
 
 /** Render a chip-row (small bordered pill badges, e.g. tags below a title). Empty / undefined input renders nothing. */
@@ -234,7 +234,7 @@ export const renderChipRow = (chips: string[] | undefined, basePath = ""): strin
   const items = chips
     .map(
       (label, i) =>
-        `<span class="text-sm px-3 py-1.5 rounded-full border border-d-textDim/30 bg-d-card/40 text-d-text"${dp(dpJoin(basePath, `chips[${i}]`))}>${renderInlineMarkup(label)}</span>`,
+        `<span class="text-sm px-3 py-1.5 rounded-full border border-d-dim/30 bg-d-card/40 text-d-text"${dp(dpJoin(basePath, `chips[${i}]`))}>${renderInlineMarkup(label)}</span>`,
     )
     .join("");
   return `<div class="flex gap-2 flex-wrap mt-4">${items}</div>`;

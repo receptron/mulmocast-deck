@@ -29,23 +29,29 @@ const COLOR_UTILITIES: [prefix: string, property: string][] = [
 ];
 
 /**
- * Alpha variants the layouts actually use (`bg-d-alt/30`, `bg-d-card/40`).
- * Tailwind derives these on demand; a static sheet has to enumerate them, so
- * `test_theme_css.ts` fails if the source grows one that is not listed here.
+ * Alpha variants the layouts actually use. Tailwind derives these on demand; a static
+ * sheet has to enumerate them, so the coverage test fails if the source grows one that
+ * is not listed here.
  */
-const BG_ALPHA_VARIANTS: [segment: TailwindColorKey, percent: number][] = [
-  ["alt", 30],
-  ["card", 40],
+const ALPHA_VARIANTS: [prefix: string, segment: TailwindColorKey | "*", percent: number][] = [
+  ["bg", "alt", 30],
+  ["bg", "card", 40],
+  ["border", "dim", 30],
+  // renderEyebrow builds `bg-${c(color)}/10`, so the colour is only known at runtime.
+  ["bg", "*", 10],
 ];
 
 const colorRules = (): string[] =>
   COLOR_UTILITIES.flatMap(([prefix, property]) => COLOR_SEGMENTS.map((seg) => `.${prefix}-d-${seg}{${property}:var(--d-${seg})}`));
 
 const alphaRules = (): string[] =>
-  BG_ALPHA_VARIANTS.map(
+  ALPHA_VARIANTS.flatMap(([prefix, seg, pct]) => {
+    const property = COLOR_UTILITIES.find(([p]) => p === prefix)?.[1];
+    if (!property) throw new Error(`alpha variant "${prefix}" has no colour utility`);
+    const segments = seg === "*" ? COLOR_SEGMENTS : [seg];
     // The `/` has to be escaped to appear in a selector.
-    ([seg, pct]) => `.bg-d-${seg}\\/${pct}{background-color:color-mix(in srgb,var(--d-${seg}) ${pct}%,transparent)}`,
-  );
+    return segments.map((sg) => `.${prefix}-d-${sg}\\/${pct}{${property}:color-mix(in srgb,var(--d-${sg}) ${pct}%,transparent)}`);
+  });
 
 const fontRules = (): string[] => FONT_SEGMENTS.map((seg) => `.font-${seg}{font-family:var(--d-font-${seg})}`);
 
