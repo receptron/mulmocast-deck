@@ -1,6 +1,6 @@
 {
   "name": "@mulmocast/deck",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "MulmoCast deck DSL: JSON-described semantic slide layouts (stats, comparison, timeline, ...) rendered to Tailwind-based HTML",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -21,15 +21,15 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.8.0",
+    "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
-    "globals": "^17.8.0",
-    "knip": "^6",
+    "globals": "^17.11.0",
+    "knip": "^6.32.2",
     "prettier": "^3.9.6",
-    "tsx": "^4.23.1",
+    "tsx": "^4.23.12",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.65.0"
+    "typescript-eslint": "^8.67.0"
   },
   "publishConfig": {
     "access": "public"
