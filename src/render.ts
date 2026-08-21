@@ -30,25 +30,26 @@ const STAGGER_MAX_ITEMS = 40;
  * Staggered form: items inside `.mulmo-stagger` (anything with `data-mulmo-item-path`) run the
  * same preset sequentially via `:nth-child(n)` delays; the slide root itself is static.
  */
-const buildIntroCss = (intro: SlideIntro, staggerMs: number | undefined): string => {
+const buildIntroCss = (intro: SlideIntro, staggerMs: number | undefined, scope: string): string => {
   const kf = INTRO_KEYFRAMES[intro];
   const name = INTRO_NAMES[intro];
   const useStagger = staggerMs !== undefined && staggerMs > 0;
   if (!useStagger) {
-    return `${kf} .mulmo-intro{animation:${name} .5s cubic-bezier(.22,.61,.36,1) both}`;
+    return `${kf} ${scope}.mulmo-intro{animation:${name} .5s cubic-bezier(.22,.61,.36,1) both}`;
   }
   const delays: string[] = [];
   for (let i = 0; i < STAGGER_MAX_ITEMS; i++) {
     // `:nth-child(n)` is 1-indexed; index i maps to delay i * staggerMs.
-    delays.push(`.mulmo-stagger [data-mulmo-item-path]:nth-child(${i + 1}){animation-delay:${i * staggerMs}ms}`);
+    delays.push(`${scope}.mulmo-stagger [data-mulmo-item-path]:nth-child(${i + 1}){animation-delay:${i * staggerMs}ms}`);
   }
-  return `${kf} .mulmo-stagger [data-mulmo-item-path]{animation:${name} .5s cubic-bezier(.22,.61,.36,1) both;animation-delay:0ms}${delays.join("")}`;
+  return `${kf} ${scope}.mulmo-stagger [data-mulmo-item-path]{animation:${name} .5s cubic-bezier(.22,.61,.36,1) both;animation-delay:0ms}${delays.join("")}`;
 };
 
 /** Gradient-filled slide titles, painted via background-clip on the `<h1>`. */
-const buildTitleGradientCss = (theme: SlideTheme): string => {
+const buildTitleGradientCss = (theme: SlideTheme, scope: string): string => {
   if (!theme.titleGradient || !isSafeCssBackground(theme.titleGradient)) return "";
-  return `h1.font-title.font-bold{background:${theme.titleGradient};-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}`;
+  const prefix = scope ? `${scope} ` : "";
+  return `${prefix}h1.font-title.font-bold{background:${theme.titleGradient};-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}`;
 };
 
 /**
@@ -56,18 +57,30 @@ const buildTitleGradientCss = (theme: SlideTheme): string => {
  * `!important` is deliberate: these have to win over the per-utility Tailwind rules
  * the CDN injects at runtime.
  */
-const buildDensityCss = (slide: SlideLayout): string => {
+const buildDensityCss = (slide: SlideLayout, scope: string): string => {
   if (slide.density !== "compact") return "";
-  const s = ".density-compact";
+  const s = `${scope}.density-compact`;
   return `${s} p,${s} li{font-size:14px!important;line-height:1.5}${s} h2{font-size:32px!important}${s} h3{font-size:17px!important}${s} .px-12{padding-left:28px!important;padding-right:28px!important}${s} .px-16{padding-left:36px!important;padding-right:36px!important}${s} .pt-5{padding-top:10px!important}${s} .mt-10{margin-top:16px!important}${s} .mt-5{margin-top:10px!important}${s} .gap-4{gap:10px!important}${s} .gap-6{gap:14px!important}${s} .space-y-2>*+*{margin-top:4px!important}${s} .space-y-4>*+*{margin-top:8px!important}${s} .p-5{padding:14px!important}${s} .p-10{padding:20px!important}`;
 };
 
 /** Glass cards: swap the solid bg-d-card for a subtle gradient + border. */
-const buildCardGlassCss = (theme: SlideTheme): string => {
+const buildCardGlassCss = (theme: SlideTheme, scope: string): string => {
   if (theme.cardStyle !== "glass") return "";
-  const s = ".card-glass";
+  const s = `${scope}.card-glass`;
   return `${s} .bg-d-card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02))!important;border:1px solid rgba(120,150,220,.22)!important;box-shadow:none!important}${s} .rounded-lg{border-radius:16px!important}`;
 };
+
+/**
+ * The four optional rule sets, in document order, with empties dropped.
+ * `scope` confines every rule to one slide's subtree; pass "" for a standalone document.
+ */
+export const buildSlideRuleSets = (theme: SlideTheme, slide: SlideLayout, scope: string): string[] =>
+  [
+    buildTitleGradientCss(theme, scope),
+    buildDensityCss(slide, scope),
+    buildCardGlassCss(theme, scope),
+    slide.intro ? buildIntroCss(slide.intro, slide.staggerMs, scope) : "",
+  ].filter(Boolean);
 
 /**
  * Wrap raw CSS in a `<style>` block for a standalone document, or emit nothing.
@@ -82,7 +95,7 @@ export type ResolvedBranding = {
 };
 
 /** Determine if a hex color is dark (luminance < 128) */
-const isDarkBg = (hex: string): boolean => {
+export const isDarkBg = (hex: string): boolean => {
   const r = parseInt(hex.slice(0, 2), 16);
   const g = parseInt(hex.slice(2, 4), 16);
   const b = parseInt(hex.slice(4, 6), 16);
@@ -143,8 +156,18 @@ const renderBrandingLogo = (branding: ResolvedBranding): string => {
   return `<img class="absolute ${posClasses} z-10" src="${dataUrl}" width="${width}" alt="" style="pointer-events:none">`;
 };
 
-/** Generate a complete HTML document for a single slide */
-export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, reference?: string, branding?: ResolvedBranding): string => {
+/**
+ * Everything a slide needs, without deciding whether it becomes a document or a fragment.
+ * `scopeClass` goes on the slide's root element and its rules are written against it,
+ * so several slides can share a page. Empty means global rules, for a standalone document.
+ */
+export const buildSlide = (
+  theme: SlideTheme,
+  slide: SlideLayout,
+  scopeClass: string,
+  reference?: string,
+  branding?: ResolvedBranding,
+): { body: string; ruleSets: string[]; twConfig: string; cdnScripts: string } => {
   const content = renderSlideContent(slide);
   const twConfig = buildTailwindConfig(theme);
   const cdnScripts = buildCdnScripts(theme, slide);
@@ -170,17 +193,15 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
     }
   }
 
-  const titleGradientCss = styleTag(buildTitleGradientCss(theme));
-  const densityCss = styleTag(buildDensityCss(slide));
+  // A standalone document holds one slide, so it passes no scope and the rules stay global.
+  const ruleSets = buildSlideRuleSets(theme, slide, scopeClass ? `.${scopeClass}` : "");
   const densityCls = slide.density === "compact" ? " density-compact" : "";
-  const cardGlassCss = styleTag(buildCardGlassCss(theme));
   const cardStyleCls = theme.cardStyle === "glass" ? " card-glass" : "";
 
   // Intro animation: opt-in CSS entrance preset. Without `staggerMs`, the whole slide animates as
   // one block via `.mulmo-intro` on the slide root. With `staggerMs`, items in list-based layouts
   // (anything with [data-mulmo-item-path]) animate sequentially via `.mulmo-stagger` + nth-child
   // delays; the slide root itself stays static so the two animations don't compound.
-  const introCss = slide.intro ? styleTag(buildIntroCss(slide.intro, slide.staggerMs)) : "";
   const useStagger = slide.intro && slide.staggerMs !== undefined && slide.staggerMs > 0;
   const introCls = !slide.intro ? "" : useStagger ? " mulmo-stagger" : " mulmo-intro";
 
@@ -193,6 +214,23 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
   const brandingBg = branding ? renderBrandingBackground(branding, bgHex) : "";
   const brandingLogo = branding ? renderBrandingLogo(branding) : "";
 
+  const body = `<div class="${scopeClass ? `${scopeClass} ` : ""}relative overflow-hidden ${bgCls}${densityCls}${cardStyleCls}${introCls} w-full h-full flex flex-col"${inlineStyle}>
+${brandingBg}
+<div class="relative z-[1] flex flex-col flex-1">
+${content}
+${referenceHtml}
+${footer}
+</div>
+${brandingLogo}
+</div>`;
+
+  return { body, ruleSets, twConfig, cdnScripts };
+};
+
+/** Generate a complete HTML document for a single slide */
+export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, reference?: string, branding?: ResolvedBranding): string => {
+  const { body, ruleSets, twConfig, cdnScripts } = buildSlide(theme, slide, "", reference, branding);
+  const ruleSetStyles = ruleSets.map(styleTag).join("");
   return `<!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
@@ -203,18 +241,10 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
 ${cdnScripts}
 <style>
   html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
-</style>${titleGradientCss}${densityCss}${cardGlassCss}${introCss}
+</style>${ruleSetStyles}
 </head>
 <body class="h-full">
-<div class="relative overflow-hidden ${bgCls}${densityCls}${cardStyleCls}${introCls} w-full h-full flex flex-col"${inlineStyle}>
-${brandingBg}
-<div class="relative z-[1] flex flex-col flex-1">
-${content}
-${referenceHtml}
-${footer}
-</div>
-${brandingLogo}
-</div>
+${body}
 </body>
 </html>`;
 };

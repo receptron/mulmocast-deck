@@ -109,9 +109,14 @@ export const renderOptionalCallout = (callout: CalloutBar | undefined): string =
   return `<div class="mt-auto pb-4">${renderCalloutBar(callout)}</div>`;
 };
 
-type TailwindColorKey = "bg" | "card" | "alt" | "text" | "muted" | "dim" | AccentColorKey;
+export type TailwindColorKey = "bg" | "card" | "alt" | "text" | "muted" | "dim" | AccentColorKey;
 
-const colorKeyMap: { [K in keyof SlideThemeColors]: TailwindColorKey } = {
+/**
+ * Theme colour field → the `d-*` class segment it backs (`bgCard` → `bg-d-card`).
+ * Exported because the CSS-variable output has to name exactly the same set; two
+ * hand-maintained lists would drift the moment a colour is added.
+ */
+export const colorKeyMap: { [K in keyof SlideThemeColors]: TailwindColorKey } = {
   bg: "bg",
   bgCard: "card",
   bgCardAlt: "alt",
@@ -127,6 +132,22 @@ const colorKeyMap: { [K in keyof SlideThemeColors]: TailwindColorKey } = {
   highlight: "highlight",
 };
 
+/**
+ * Font stacks keyed by their `font-*` class segment. `accent` is absent unless the
+ * theme sets it, which is what makes `font-accent` fall through to the inherited font.
+ */
+export const buildFontStacks = (theme: SlideTheme): Record<string, string[]> => {
+  const stacks: Record<string, string[]> = {
+    title: [theme.fonts.title, "serif"],
+    body: [theme.fonts.body, "Arial", "sans-serif"],
+    mono: [theme.fonts.mono, "monospace"],
+  };
+  if (theme.fonts.accent) {
+    stacks.accent = [theme.fonts.accent, "ui-sans-serif", "system-ui", "sans-serif"];
+  }
+  return stacks;
+};
+
 /** Build the Tailwind config JSON string for theme colors and fonts */
 export const buildTailwindConfig = (theme: SlideTheme): string => {
   const colorMap: { [K in TailwindColorKey]?: string } = {};
@@ -136,14 +157,7 @@ export const buildTailwindConfig = (theme: SlideTheme): string => {
       colorMap[mapped] = `#${v}`;
     }
   });
-  const fontFamily: Record<string, string[]> = {
-    title: [theme.fonts.title, "serif"],
-    body: [theme.fonts.body, "Arial", "sans-serif"],
-    mono: [theme.fonts.mono, "monospace"],
-  };
-  if (theme.fonts.accent) {
-    fontFamily.accent = [theme.fonts.accent, "ui-sans-serif", "system-ui", "sans-serif"];
-  }
+  const fontFamily = buildFontStacks(theme);
   return JSON.stringify({
     theme: {
       extend: {
