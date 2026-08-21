@@ -80,7 +80,12 @@ Nothing shared between slides is emitted per slide. The host is responsible for:
    them: `@source "../node_modules/@mulmocast/deck/lib/**/*.js";`
 3. **Anything in `requires`**, loaded once — then drive each `[data-mulmo-chart]` canvas
    (its config is on the attribute) and each `.mermaid` element it finds.
-4. **A sized container.** The fragment is `w-full h-full`; the layouts are designed at 1280px wide.
+4. **Sanitizing.** The markup is **not** sanitized: a `SlideLayout` is user data, and a chart
+   block still carries the driver `<script>` the standalone document needs. Sanitize before
+   injecting. A chart's config is duplicated onto `data-mulmo-chart` precisely so it survives
+   that — drive the chart from the attribute rather than from a script that would not have
+   executed via `innerHTML` anyway.
+5. **A sized container.** The fragment is `w-full h-full`; the layouts are designed at 1280px wide.
 
 `generateSlideHTML()` is unchanged and remains the right call for PNG / PDF / movie output.
 

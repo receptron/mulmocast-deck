@@ -49,18 +49,20 @@ const frag = (t: SlideTheme, s: SlideLayout, scopeClass = "sc") => generateSlide
 
 test("fragment emits no document scaffolding and no shared assets", () => {
   const { html, css } = frag(lightTheme, chartSlide);
-  ["<!DOCTYPE", "<html", "<head", "<body", "<script", "cdn.tailwindcss.com", "cdn.jsdelivr.net"].forEach((needle) =>
+  ["<!DOCTYPE", "<html", "<head", "<body", "cdn.tailwindcss.com", "cdn.jsdelivr.net"].forEach((needle) =>
     assert.ok(!html.includes(needle) && !css.includes(needle), `fragment must not carry ${needle}`),
   );
   // The document's reset would break any host that embeds a fragment.
   assert.ok(!css.includes("html, body"), "no html/body reset");
 });
 
-test("a chart survives into the fragment as data, not as a dead script", () => {
+test("a chart's config reaches the host as data, so it survives sanitizing", () => {
+  // The fragment is deliberately NOT sanitized here — a SlideLayout is user data, and
+  // regex-stripping tags is not a security boundary, only one that looks like one. The
+  // host sanitizes, which drops the driver script; the attribute is what it hydrates from.
   const { html } = frag(lightTheme, chartSlide);
-  assert.ok(!html.includes("<script"), "the driver script would neither run nor survive sanitising");
-  assert.ok(html.includes("data-mulmo-chart="), "its config rides on the canvas instead");
-  assert.ok(html.includes("<canvas"), "the canvas itself stays");
+  assert.ok(html.includes("data-mulmo-chart="), "config rides on the canvas");
+  assert.ok(html.includes("<canvas"), "the canvas itself is there to drive");
 });
 
 test("fragment reports what the host must load rather than loading it", () => {
@@ -139,9 +141,7 @@ test("fragment body is the document body, modulo the scope class", () => {
     resetSlideIdCounter();
     const { html } = generateSlideFragment(t, s, { reference: "ref", scopeClass: "sc" });
     const docBody = doc.slice(doc.indexOf('<body class="h-full">\n') + '<body class="h-full">\n'.length, doc.indexOf("\n</body>"));
-    // The fragment drops <script> (see stripScripts); everything else must match.
-    const docBodyNoScripts = docBody.replace(/\n?[ \t]*<script\b[^>]*>[\s\S]*?<\/script>/g, "");
-    assert.strictEqual(html.replace('<div class="sc ', '<div class="'), docBodyNoScripts, `case ${i}`);
+    assert.strictEqual(html.replace('<div class="sc ', '<div class="'), docBody, `case ${i}`);
   });
 });
 

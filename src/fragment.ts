@@ -32,14 +32,6 @@ export type SlideFragmentOptions = {
 };
 
 /**
- * A fragment must not carry `<script>`. Injected markup does not execute its scripts,
- * and a sanitiser drops them — so what ships is dead weight that reads like working
- * code. The only script the layouts emit is the chart driver, whose config also rides
- * on the canvas as `data-mulmo-chart` for the host to hydrate from.
- */
-const stripScripts = (html: string): string => html.replace(/\n?[ \t]*<script\b[^>]*>[\s\S]*?<\/script>/g, "");
-
-/**
  * Render a slide as markup that drops into a `<div>`, instead of the standalone document
  * `generateSlideHTML` produces.
  *
@@ -52,6 +44,12 @@ const stripScripts = (html: string): string => html.replace(/\n?[ \t]*<script\b[
  * `requires`, driving any `[data-mulmo-chart]` canvas and `.mermaid` element it finds,
  * and giving the container a size — the fragment is `w-full h-full`, and the
  * layouts are designed at 1280px wide.
+ *
+ * **The markup is not sanitized.** A `SlideLayout` is user data, and the chart block
+ * still carries the driver `<script>` the document needs, so a host that injects this
+ * into its own page must sanitize first. That is why a chart's config also rides on
+ * the canvas as `data-mulmo-chart`: it survives sanitizing, and the host drives the
+ * chart from there instead of from a script that would not have run anyway.
  */
 export const generateSlideFragment = (theme: SlideTheme, slide: SlideLayout, options: SlideFragmentOptions = {}): SlideFragment => {
   // Allocated before the body so the scope class exists to write rules against. It comes
@@ -65,7 +63,7 @@ export const generateSlideFragment = (theme: SlideTheme, slide: SlideLayout, opt
   const css = [`.${scopeClass}{${buildThemeVars(theme)}}`, ...ruleSets].join("");
 
   return {
-    html: stripScripts(body),
+    html: body,
     css,
     scopeClass,
     requires: [...(hasChart ? (["chart"] as const) : []), ...(hasMermaid ? (["mermaid"] as const) : [])],
