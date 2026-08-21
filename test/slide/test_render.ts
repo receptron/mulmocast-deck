@@ -225,3 +225,30 @@ test("generateSlideHTML: includes both CDNs when chart and mermaid blocks coexis
   assert.ok(html.includes("chart.js"));
   assert.ok(html.includes("mermaid.min.js"));
 });
+
+// The four optional rule sets (titleGradient / density / cardGlass / intro) share one
+// `<style>` wrapper. An off condition must produce no element at all — an empty
+// `<style></style>` would be a silent regression the per-feature tests above cannot see,
+// because each of them only asserts that its own class or rule is absent.
+test("generateSlideHTML: never emits an empty <style> block", () => {
+  const bare = generateSlideHTML(theme, { layout: "title", title: "T" });
+  assert.ok(!/<style>\s*<\/style>/.test(bare), "no empty style element");
+  // Exactly one <style> — the fixed html/body reset. The four optional ones are all off here.
+  assert.strictEqual(bare.match(/<style>/g)?.length, 1);
+});
+
+test("generateSlideHTML: each optional rule set adds exactly one <style> block", () => {
+  const count = (html: string) => html.match(/<style>/g)?.length ?? 0;
+  const base: SlideLayout = { layout: "title", title: "T" };
+  assert.strictEqual(count(generateSlideHTML({ ...theme, titleGradient: "linear-gradient(90deg,#fff,#000)" }, base)), 2);
+  assert.strictEqual(count(generateSlideHTML({ ...theme, cardStyle: "glass" }, base)), 2);
+  assert.strictEqual(count(generateSlideHTML(theme, { ...base, density: "compact" })), 2);
+  assert.strictEqual(count(generateSlideHTML(theme, { ...base, intro: "fade" })), 2);
+  // All four at once.
+  assert.strictEqual(
+    count(
+      generateSlideHTML({ ...theme, titleGradient: "linear-gradient(90deg,#fff,#000)", cardStyle: "glass" }, { ...base, density: "compact", intro: "fade" }),
+    ),
+    5,
+  );
+});
