@@ -3,6 +3,9 @@
 
 export { generateSlideHTML } from "./render.js";
 export type { ResolvedBranding } from "./render.js";
+export { generateSlideFragment } from "./fragment.js";
+export type { SlideFragment, SlideFragmentOptions, SlideRuntime } from "./fragment.js";
+export { slideUtilityCss, buildThemeVars } from "./theme_css.js";
 export { renderSlideContent } from "./layouts/index.js";
 export { renderContentBlock, renderContentBlocks } from "./blocks.js";
 export { escapeHtml, resetSlideIdCounter, renderInlineMarkup } from "./utils.js";

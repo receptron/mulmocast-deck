@@ -252,3 +252,28 @@ test("generateSlideHTML: each optional rule set adds exactly one <style> block",
     5,
   );
 });
+
+// A chart's config is emitted twice: the inline <script> drives the standalone document,
+// and data-mulmo-chart carries the same config for hosts that embed the markup, where an
+// injected <script> neither survives sanitising nor executes via innerHTML.
+test("generateSlideHTML: a chart canvas carries its config as both a script and an attribute", () => {
+  const chartSlide = {
+    layout: "columns",
+    title: "C",
+    columns: [{ title: "A", content: [{ type: "chart", title: "S", chartData: { type: "bar", data: { labels: ["a"] } } }] }],
+  } as unknown as SlideLayout;
+  const html = generateSlideHTML(theme, chartSlide);
+
+  const attr = html.match(/data-mulmo-chart="([^"]*)"/)?.[1];
+  assert.ok(attr, "canvas should carry data-mulmo-chart");
+  // Must survive a round-trip through the attribute, or a host cannot hydrate from it.
+  const decoded = attr
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+  assert.deepStrictEqual(JSON.parse(decoded), { type: "bar", data: { labels: ["a"] } });
+
+  assert.ok(html.includes("new Chart(ctx,d)"), "the document still drives the chart itself");
+});

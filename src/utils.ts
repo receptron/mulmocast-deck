@@ -109,9 +109,14 @@ export const renderOptionalCallout = (callout: CalloutBar | undefined): string =
   return `<div class="mt-auto pb-4">${renderCalloutBar(callout)}</div>`;
 };
 
-type TailwindColorKey = "bg" | "card" | "alt" | "text" | "muted" | "dim" | AccentColorKey;
+export type TailwindColorKey = "bg" | "card" | "alt" | "text" | "muted" | "dim" | AccentColorKey;
 
-const colorKeyMap: { [K in keyof SlideThemeColors]: TailwindColorKey } = {
+/**
+ * Theme colour field → the `d-*` class segment it backs (`bgCard` → `bg-d-card`).
+ * Exported because the CSS-variable output has to name exactly the same set; two
+ * hand-maintained lists would drift the moment a colour is added.
+ */
+export const colorKeyMap: { [K in keyof SlideThemeColors]: TailwindColorKey } = {
   bg: "bg",
   bgCard: "card",
   bgCardAlt: "alt",
@@ -127,6 +132,22 @@ const colorKeyMap: { [K in keyof SlideThemeColors]: TailwindColorKey } = {
   highlight: "highlight",
 };
 
+/**
+ * Font stacks keyed by their `font-*` class segment. `accent` is absent unless the
+ * theme sets it, which is what makes `font-accent` fall through to the inherited font.
+ */
+export const buildFontStacks = (theme: SlideTheme): Record<string, string[]> => {
+  const stacks: Record<string, string[]> = {
+    title: [theme.fonts.title, "serif"],
+    body: [theme.fonts.body, "Arial", "sans-serif"],
+    mono: [theme.fonts.mono, "monospace"],
+  };
+  if (theme.fonts.accent) {
+    stacks.accent = [theme.fonts.accent, "ui-sans-serif", "system-ui", "sans-serif"];
+  }
+  return stacks;
+};
+
 /** Build the Tailwind config JSON string for theme colors and fonts */
 export const buildTailwindConfig = (theme: SlideTheme): string => {
   const colorMap: { [K in TailwindColorKey]?: string } = {};
@@ -136,14 +157,7 @@ export const buildTailwindConfig = (theme: SlideTheme): string => {
       colorMap[mapped] = `#${v}`;
     }
   });
-  const fontFamily: Record<string, string[]> = {
-    title: [theme.fonts.title, "serif"],
-    body: [theme.fonts.body, "Arial", "sans-serif"],
-    mono: [theme.fonts.mono, "monospace"],
-  };
-  if (theme.fonts.accent) {
-    fontFamily.accent = [theme.fonts.accent, "ui-sans-serif", "system-ui", "sans-serif"];
-  }
+  const fontFamily = buildFontStacks(theme);
   return JSON.stringify({
     theme: {
       extend: {
@@ -211,7 +225,7 @@ export const renderCalloutBar = (obj: { text: string; label?: string; color?: st
 export const renderEyebrow = (eyebrow: { label: string; color?: string } | undefined, defaultColor?: string, basePath = ""): string => {
   if (!eyebrow) return "";
   const color = c(eyebrow.color ?? defaultColor ?? "primary");
-  return `<span class="inline-flex items-center gap-2 font-accent font-extrabold uppercase tracking-[0.16em] text-[12px] px-3 py-1 rounded-full border border-d-textDim/30 bg-${color}/10 text-${color}"${dp(dpJoin(basePath, "eyebrow.label"))}>${renderInlineMarkup(eyebrow.label)}</span>`;
+  return `<span class="inline-flex items-center gap-2 font-accent font-extrabold uppercase tracking-[0.16em] text-[12px] px-3 py-1 rounded-full border border-d-dim/30 bg-${color}/10 text-${color}"${dp(dpJoin(basePath, "eyebrow.label"))}>${renderInlineMarkup(eyebrow.label)}</span>`;
 };
 
 /** Render a chip-row (small bordered pill badges, e.g. tags below a title). Empty / undefined input renders nothing. */
@@ -220,7 +234,7 @@ export const renderChipRow = (chips: string[] | undefined, basePath = ""): strin
   const items = chips
     .map(
       (label, i) =>
-        `<span class="text-sm px-3 py-1.5 rounded-full border border-d-textDim/30 bg-d-card/40 text-d-text"${dp(dpJoin(basePath, `chips[${i}]`))}>${renderInlineMarkup(label)}</span>`,
+        `<span class="text-sm px-3 py-1.5 rounded-full border border-d-dim/30 bg-d-card/40 text-d-text"${dp(dpJoin(basePath, `chips[${i}]`))}>${renderInlineMarkup(label)}</span>`,
     )
     .join("");
   return `<div class="flex gap-2 flex-wrap mt-4">${items}</div>`;

@@ -43,6 +43,52 @@ const html = generateSlideHTML(theme, slide);
 // or pass to Puppeteer for PNG/PDF rendering (see mulmocast-cli).
 ```
 
+### Rendering into a `<div>` instead of a document
+
+`generateSlideHTML()` returns a whole page — Tailwind via CDN, a runtime `tailwind.config`,
+an `html, body` reset. That is what an `<iframe srcdoc>` or Puppeteer wants, and it is
+exactly wrong for a host that wants several slides on one page: N iframes, N Tailwind
+loads, and rules like `.mulmo-intro { ... }` that are global, so the last slide's intro
+preset wins for all of them.
+
+`generateSlideFragment()` returns the same slide as embeddable markup:
+
+```ts
+import { generateSlideFragment, slideUtilityCss } from "@mulmocast/deck";
+
+const { html, css, scopeClass, requires, chartPlugins, mermaidTheme } =
+  generateSlideFragment(theme, slide, { scopeClass: `slide-${i}` });
+```
+
+| field | what it is |
+|--|--|
+| `html` | body markup only — no `<html>`, `<head>`, `<style>` or `<script>` |
+| `css` | the theme as custom properties, plus every rule, confined to `scopeClass` |
+| `scopeClass` | the class on the fragment's root element; pass your own to keep it stable |
+| `requires` | `"chart"` / `"mermaid"` — runtimes the **host** loads once for the page |
+| `chartPlugins` | extra Chart.js plugin CDNs this slide's chart types need |
+| `mermaidTheme` | which mermaid theme suits this slide's background |
+
+Nothing shared between slides is emitted per slide. The host is responsible for:
+
+1. **`slideUtilityCss` once.** A static stylesheet backing every `d-*` and `font-*` class,
+   reading the CSS custom properties each fragment sets. It replaces the runtime
+   `tailwind.config` the document builds, and it is theme-independent — so changing a
+   theme is a variable write, with no re-render.
+2. **Standard Tailwind utilities.** Classes like `px-16` and `text-[60px]` only ever appear
+   inside this package's generated strings, so a Tailwind v4 host must be told to scan
+   them: `@source "../node_modules/@mulmocast/deck/lib/**/*.js";`
+3. **Anything in `requires`**, loaded once — then drive each `[data-mulmo-chart]` canvas
+   (its config is on the attribute) and each `.mermaid` element it finds.
+4. **Sanitizing.** The markup is **not** sanitized: a `SlideLayout` is user data, and a chart
+   block still carries the driver `<script>` the standalone document needs. Sanitize before
+   injecting. A chart's config is duplicated onto `data-mulmo-chart` precisely so it survives
+   that — drive the chart from the attribute rather than from a script that would not have
+   executed via `innerHTML` anyway.
+5. **A sized container.** The fragment is `w-full h-full`; the layouts are designed at 1280px wide.
+
+`generateSlideHTML()` is unchanged and remains the right call for PNG / PDF / movie output.
+
 ## Available layouts
 
 `title` · `bigQuote` · `columns` · `comparison` · `stats` · `table` · `timeline` · `matrix` · `grid` · `split` · `funnel` · `waterfall` · `manifesto`
