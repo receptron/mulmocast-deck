@@ -270,13 +270,19 @@ const renderImageRefPlaceholder = (block: ContentBlock & { type: "imageRef" }): 
   return `<div class="min-h-0 flex-1 overflow-hidden flex items-center justify-center bg-d-alt rounded"><p class="text-sm text-d-dim font-body">[imageRef: ${escapeHtml(block.ref)}]</p></div>`;
 };
 
+/**
+ * The config is emitted twice on purpose. The inline `<script>` drives the standalone
+ * document (Puppeteer runs it); `data-mulmo-chart` carries the same config for hosts
+ * that embed the markup instead, where an injected `<script>` neither survives
+ * sanitising nor executes via innerHTML.
+ */
 const renderChart = (block: ContentBlock & { type: "chart" }): string => {
   const chartId = generateSlideId("chart");
   const chartData = JSON.stringify(block.chartData);
   return `<div class="flex-1 min-h-0 flex flex-col">
   ${blockTitle(block.title)}
   <div class="flex-1 min-h-0 relative">
-    <canvas id="${chartId}" data-chart-ready="false"></canvas>
+    <canvas id="${chartId}" data-chart-ready="false" data-mulmo-chart="${escapeHtml(chartData)}"></canvas>
   </div>
   <script>(function(){
     const ctx=document.getElementById('${chartId}');
