@@ -35,15 +35,45 @@ const buildIntroCss = (intro: SlideIntro, staggerMs: number | undefined): string
   const name = INTRO_NAMES[intro];
   const useStagger = staggerMs !== undefined && staggerMs > 0;
   if (!useStagger) {
-    return `\n<style>${kf} .mulmo-intro{animation:${name} .5s cubic-bezier(.22,.61,.36,1) both}</style>`;
+    return `${kf} .mulmo-intro{animation:${name} .5s cubic-bezier(.22,.61,.36,1) both}`;
   }
   const delays: string[] = [];
   for (let i = 0; i < STAGGER_MAX_ITEMS; i++) {
     // `:nth-child(n)` is 1-indexed; index i maps to delay i * staggerMs.
     delays.push(`.mulmo-stagger [data-mulmo-item-path]:nth-child(${i + 1}){animation-delay:${i * staggerMs}ms}`);
   }
-  return `\n<style>${kf} .mulmo-stagger [data-mulmo-item-path]{animation:${name} .5s cubic-bezier(.22,.61,.36,1) both;animation-delay:0ms}${delays.join("")}</style>`;
+  return `${kf} .mulmo-stagger [data-mulmo-item-path]{animation:${name} .5s cubic-bezier(.22,.61,.36,1) both;animation-delay:0ms}${delays.join("")}`;
 };
+
+/** Gradient-filled slide titles, painted via background-clip on the `<h1>`. */
+const buildTitleGradientCss = (theme: SlideTheme): string => {
+  if (!theme.titleGradient || !isSafeCssBackground(theme.titleGradient)) return "";
+  return `h1.font-title.font-bold{background:${theme.titleGradient};-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}`;
+};
+
+/**
+ * Compact density: shrink body text and pad spacing — approximates reveal.js' autofit.
+ * `!important` is deliberate: these have to win over the per-utility Tailwind rules
+ * the CDN injects at runtime.
+ */
+const buildDensityCss = (slide: SlideLayout): string => {
+  if (slide.density !== "compact") return "";
+  const s = ".density-compact";
+  return `${s} p,${s} li{font-size:14px!important;line-height:1.5}${s} h2{font-size:32px!important}${s} h3{font-size:17px!important}${s} .px-12{padding-left:28px!important;padding-right:28px!important}${s} .px-16{padding-left:36px!important;padding-right:36px!important}${s} .pt-5{padding-top:10px!important}${s} .mt-10{margin-top:16px!important}${s} .mt-5{margin-top:10px!important}${s} .gap-4{gap:10px!important}${s} .gap-6{gap:14px!important}${s} .space-y-2>*+*{margin-top:4px!important}${s} .space-y-4>*+*{margin-top:8px!important}${s} .p-5{padding:14px!important}${s} .p-10{padding:20px!important}`;
+};
+
+/** Glass cards: swap the solid bg-d-card for a subtle gradient + border. */
+const buildCardGlassCss = (theme: SlideTheme): string => {
+  if (theme.cardStyle !== "glass") return "";
+  const s = ".card-glass";
+  return `${s} .bg-d-card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02))!important;border:1px solid rgba(120,150,220,.22)!important;box-shadow:none!important}${s} .rounded-lg{border-radius:16px!important}`;
+};
+
+/**
+ * Wrap raw CSS in a `<style>` block for a standalone document, or emit nothing.
+ * The leading newline puts the block on its own line; an empty rule set adds no blank line.
+ */
+const styleTag = (css: string): string => (css ? `\n<style>${css}</style>` : "");
 
 /** Pre-resolved branding data (all sources converted to data URLs) */
 export type ResolvedBranding = {
@@ -140,35 +170,17 @@ export const generateSlideHTML = (theme: SlideTheme, slide: SlideLayout, referen
     }
   }
 
-  // Optional `<style>` block: when theme.titleGradient is set (and safe), paint h1 titles with a background-clipped gradient.
-  // Prepend a newline so that when set the block appears on its own line; when empty, no extra blank line is emitted.
-  const titleGradientCss =
-    theme.titleGradient && isSafeCssBackground(theme.titleGradient)
-      ? `\n<style>h1.font-title.font-bold{background:${theme.titleGradient};-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}</style>`
-      : "";
-
-  // Density: when slide.density === "compact", shrink body text and pad spacing — approximates reveal.js' autofit.
-  // Scoped to .density-compact so the override never leaks to other slides; the rules are intentionally !important
-  // because they have to win over per-utility Tailwind rules injected by the CDN at runtime.
-  const densityCss =
-    slide.density === "compact"
-      ? `\n<style>.density-compact p,.density-compact li{font-size:14px!important;line-height:1.5}.density-compact h2{font-size:32px!important}.density-compact h3{font-size:17px!important}.density-compact .px-12{padding-left:28px!important;padding-right:28px!important}.density-compact .px-16{padding-left:36px!important;padding-right:36px!important}.density-compact .pt-5{padding-top:10px!important}.density-compact .mt-10{margin-top:16px!important}.density-compact .mt-5{margin-top:10px!important}.density-compact .gap-4{gap:10px!important}.density-compact .gap-6{gap:14px!important}.density-compact .space-y-2>*+*{margin-top:4px!important}.density-compact .space-y-4>*+*{margin-top:8px!important}.density-compact .p-5{padding:14px!important}.density-compact .p-10{padding:20px!important}</style>`
-      : "";
+  const titleGradientCss = styleTag(buildTitleGradientCss(theme));
+  const densityCss = styleTag(buildDensityCss(slide));
   const densityCls = slide.density === "compact" ? " density-compact" : "";
-
-  // Glass card style: swap the default solid bg-d-card cards for a subtle gradient + border (reveal.js-style "glass" cards).
-  // Scoped to .card-glass on the slide wrapper so it doesn't leak to other slides on the same page.
-  const cardGlassCss =
-    theme.cardStyle === "glass"
-      ? `\n<style>.card-glass .bg-d-card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02))!important;border:1px solid rgba(120,150,220,.22)!important;box-shadow:none!important}.card-glass .rounded-lg{border-radius:16px!important}</style>`
-      : "";
+  const cardGlassCss = styleTag(buildCardGlassCss(theme));
   const cardStyleCls = theme.cardStyle === "glass" ? " card-glass" : "";
 
   // Intro animation: opt-in CSS entrance preset. Without `staggerMs`, the whole slide animates as
   // one block via `.mulmo-intro` on the slide root. With `staggerMs`, items in list-based layouts
   // (anything with [data-mulmo-item-path]) animate sequentially via `.mulmo-stagger` + nth-child
   // delays; the slide root itself stays static so the two animations don't compound.
-  const introCss = slide.intro ? buildIntroCss(slide.intro, slide.staggerMs) : "";
+  const introCss = slide.intro ? styleTag(buildIntroCss(slide.intro, slide.staggerMs)) : "";
   const useStagger = slide.intro && slide.staggerMs !== undefined && slide.staggerMs > 0;
   const introCls = !slide.intro ? "" : useStagger ? " mulmo-stagger" : " mulmo-intro";
 
