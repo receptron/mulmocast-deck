@@ -59,7 +59,9 @@ const brandings: (ResolvedBranding | undefined)[] = [
 
 const references = [undefined, "Source: Example 2026 <&>"];
 
-const chartBlock = { type: "chart", chartType: "sankey", title: "S", data: { labels: [], datasets: [] } };
+// chartData (not chartType) is what renderChart reads; an earlier fixture spelled it
+// wrong, so the chart config path rendered `const d=undefined` and went unmeasured.
+const chartBlock = { type: "chart", title: "S", chartData: { type: "sankey", data: { labels: ["a"], datasets: [{ data: [1] }] } } };
 const mermaidBlock = { type: "mermaid", code: "graph TD; A-->B" };
 
 /** One minimal slide per layout. Two carry chart / mermaid blocks so buildCdnScripts() is reached. */
