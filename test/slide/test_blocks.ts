@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert";
 import { renderContentBlock, renderContentBlocks } from "../../src/blocks.js";
 import { resetSlideIdCounter, renderInlineMarkup } from "../../src/utils.js";
+import { generateSlideHTML } from "../../src/render.js";
+import { renderMatrix } from "./render_matrix.js";
 
 // ═══════════════════════════════════════════════════════════
 // text block
@@ -260,12 +262,34 @@ test("chart: renders canvas element with unique ID", () => {
   assert.ok(html.includes("data-chart-ready"));
 });
 
-test("chart: embeds chart data as JSON in script", () => {
+test("chart: carries its config on the canvas, and nothing draws it", () => {
   resetSlideIdCounter();
   const chartData = { type: "pie", data: { labels: ["X", "Y"], datasets: [{ data: [10, 20] }] } };
   const html = renderContentBlock({ type: "chart", chartData });
-  assert.ok(html.includes('"type":"pie"'));
-  assert.ok(html.includes("new Chart"));
+  const attribute = html.match(/data-mulmo-chart="([^"]*)"/)?.[1];
+  assert.ok(attribute, "the config must be on the canvas");
+  assert.deepStrictEqual(
+    JSON.parse(
+      attribute
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&amp;/g, "&"),
+    ),
+    chartData,
+  );
+  assert.ok(!html.includes("new Chart"), "the block does not draw it — generateSlideHTML's driver does");
+});
+
+// A block that emitted its own script would put one inside generateSlideFragment's markup
+// too, where it cannot run and cannot be removed safely: the config it carries is arbitrary
+// user data, so a `</script>` inside it ends the block early.
+test("chart: emits no script at all", () => {
+  resetSlideIdCounter();
+  const html = renderContentBlock({ type: "chart", chartData: { label: "</script><p>injected</p>" } });
+  assert.strictEqual(html.toLowerCase().split("<script").length - 1, 0);
+  assert.ok(!html.includes("<p>injected</p>"), "and the hostile config stays inside the attribute");
 });
 
 test("chart: renders optional title", () => {
@@ -285,10 +309,17 @@ test("chart: omits title element when not provided", () => {
   assert.ok(!html.includes("font-bold text-d-text"));
 });
 
-test("chart: disables animation for Puppeteer rendering", () => {
+test("chart: the document's driver disables animation for Puppeteer rendering", () => {
   resetSlideIdCounter();
-  const html = renderContentBlock({ type: "chart", chartData: { type: "bar", data: {} } });
-  assert.ok(html.includes("d.options.animation=false"));
+  // Any theme will do; borrow the matrix's rather than inventing a second fixture.
+  const html = generateSlideHTML(renderMatrix[0].theme, {
+    layout: "split",
+    title: "T",
+    left: { content: [{ type: "chart", chartData: { type: "bar", data: {} } }] },
+    right: { content: [] },
+  });
+  assert.ok(html.includes("d.options.animation=false"), "the driver is what Puppeteer runs");
+  assert.strictEqual(html.split("d.options.animation=false").length - 1, 1, "one driver for the page, not one per chart");
 });
 
 // ═══════════════════════════════════════════════════════════

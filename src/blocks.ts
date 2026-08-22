@@ -271,29 +271,19 @@ const renderImageRefPlaceholder = (block: ContentBlock & { type: "imageRef" }): 
 };
 
 /**
- * The config is emitted twice on purpose. The inline `<script>` drives the standalone
- * document (Puppeteer runs it); `data-mulmo-chart` carries the same config for hosts
- * that embed the markup instead, where an injected `<script>` neither survives
- * sanitising nor executes via innerHTML.
+ * Markup only: the config rides on the canvas as `data-mulmo-chart` and nothing here draws
+ * it. `generateSlideHTML` adds one driver for the whole document; a host embedding a
+ * fragment drives the same attribute itself. Blocks emit no `<script>` at all, so a
+ * fragment cannot carry one — which is the difference between the two APIs, rather than
+ * something a caller has to strip or opt out of.
  */
 const renderChart = (block: ContentBlock & { type: "chart" }): string => {
   const chartId = generateSlideId("chart");
-  const chartData = JSON.stringify(block.chartData);
   return `<div class="flex-1 min-h-0 flex flex-col">
   ${blockTitle(block.title)}
   <div class="flex-1 min-h-0 relative">
-    <canvas id="${chartId}" data-chart-ready="false" data-mulmo-chart="${escapeHtml(chartData)}"></canvas>
+    <canvas id="${chartId}" data-chart-ready="false" data-mulmo-chart="${escapeHtml(JSON.stringify(block.chartData))}"></canvas>
   </div>
-  <script>(function(){
-    const ctx=document.getElementById('${chartId}');
-    const d=${chartData};
-    if(!d.options)d.options={};
-    d.options.animation=false;
-    d.options.responsive=true;
-    d.options.maintainAspectRatio=false;
-    new Chart(ctx,d);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ctx.dataset.chartReady="true"}));
-  })()</script>
 </div>`;
 };
 

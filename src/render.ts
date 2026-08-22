@@ -103,6 +103,28 @@ export const isDarkBg = (hex: string): boolean => {
 };
 
 /** Build CDN script tags for chart/mermaid when needed */
+/**
+ * Draws every chart in the document from the `data-mulmo-chart` attribute the block renderer
+ * leaves on each canvas. One driver for the page, not one per chart: a block that emitted
+ * its own would put a `<script>` inside `generateSlideFragment`'s markup too, where it
+ * cannot run and cannot be removed safely — the config it carries is arbitrary user data,
+ * so a `</script>` inside it ends the block early.
+ *
+ * It waits for `DOMContentLoaded`: this tag sits in `<head>`, above the body it has to find
+ * canvases in. The Chart.js CDN tag above it is synchronous, so `Chart` is already defined.
+ */
+const chartDriverScript = `<script>document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('canvas[data-mulmo-chart]').forEach(function(ctx){
+    const d=JSON.parse(ctx.dataset.mulmoChart);
+    if(!d.options)d.options={};
+    d.options.animation=false;
+    d.options.responsive=true;
+    d.options.maintainAspectRatio=false;
+    new Chart(ctx,d);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){ctx.dataset.chartReady="true"})});
+  });
+})</script>`;
+
 const buildCdnScripts = (theme: SlideTheme, slide: SlideLayout): string => {
   const { hasChart, hasMermaid, chartPlugins } = detectBlockTypes(slide);
   const scripts: string[] = [];
@@ -111,6 +133,7 @@ const buildCdnScripts = (theme: SlideTheme, slide: SlideLayout): string => {
     chartPlugins.forEach((cdn) => {
       scripts.push(`<script src="${cdn}"></script>`);
     });
+    scripts.push(chartDriverScript);
   }
   if (hasMermaid) {
     const mermaidTheme = isDarkBg(theme.colors.bg) ? "dark" : "default";
