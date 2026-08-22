@@ -1,5 +1,38 @@
 # Changelog
 
+## 2.0.0 — 2026-08-22
+
+### Changed (breaking)
+
+- **Charts are drawn by one document-level driver, not by a script inside each block** (#28).
+  `renderChart` emitted an inline `<script>` so the standalone document Puppeteer opens would
+  draw itself. `generateSlideFragment` returned that same markup, which put a `<script>` into
+  markup a host embeds — where it cannot run, and does not survive sanitising.
+
+  Removing it downstream turned out to be unsafe: a chart's config is arbitrary user data, so
+  a `</script>` inside a chart label ends the block early and leaves its tail behind as markup.
+  A chart label of `"</script><p>injected</p>"` is schema-valid and reproduced exactly that.
+
+  So a block emits no `<script>` at all, and `generateSlideHTML` adds one driver for the page
+  that reads the `data-mulmo-chart` attribute each canvas already carries — the same attribute
+  an embedding host drives. The config is emitted once instead of twice, and the difference
+  between the two APIs is what each returns rather than a flag a caller has to pass.
+
+  **What breaks:** `renderContentBlock` / `renderContentBlocks` return different HTML for a
+  chart block — the canvas and its `data-mulmo-chart` attribute, with no script. A caller
+  relying on that script to draw must either use `generateSlideHTML`, which now supplies the
+  driver, or drive `canvas[data-mulmo-chart]` itself:
+
+  ```js
+  document.querySelectorAll("canvas[data-mulmo-chart]").forEach((canvas) => {
+    new Chart(canvas.getContext("2d"), JSON.parse(canvas.dataset.mulmoChart));
+  });
+  ```
+
+  `generateSlideHTML`'s rendered result is unchanged: verified in a browser that both canvases
+  draw, `data-chart-ready` still goes true, and animation is still disabled for Puppeteer. The
+  golden matrix moved for exactly the 126 chart-bearing cases of 1636, and for nothing else.
+
 ## 1.2.0 — 2026-08-21
 
 ### Added
@@ -36,7 +69,7 @@
 - **Chip and eyebrow borders named a colour that does not exist** (#27). Both used
   `border-d-textDim/30`, but `colorKeyMap` maps the theme field `textDim` to the class segment
   `dim`, so the Tailwind config only ever defined `d.dim`. The border fell through to
-  `currentColor` — confirmed in a browser, where the chip border computed to the theme's *text*
+  `currentColor` — confirmed in a browser, where the chip border computed to the theme's _text_
   colour instead of `textDim` at 30%. Existing decks will see these borders render correctly for
   the first time.
 
