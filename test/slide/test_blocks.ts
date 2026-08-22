@@ -314,7 +314,6 @@ test("chart: the document's driver disables animation for Puppeteer rendering", 
   // Any theme will do; borrow the matrix's rather than inventing a second fixture.
   const html = generateSlideHTML(renderMatrix[0].theme, {
     layout: "split",
-    title: "T",
     left: { content: [{ type: "chart", chartData: { type: "bar", data: {} } }] },
     right: { content: [] },
   });
