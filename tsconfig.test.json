@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    /* The base config emits the published package: rootDir pins it to src/, declaration
+       describes the output, and `types: []` keeps ambient globals out of a library. None of
+       that applies to a type-only pass over tests that run under node:test. */
+    "rootDir": ".",
+    "declaration": false,
+    "types": ["node"]
+  },
+  "include": ["test/**/*.ts"],
+  "exclude": ["node_modules", "lib"]
+}

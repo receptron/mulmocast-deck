@@ -511,7 +511,7 @@ test("table: renders row headers in bold", () => {
   // First cell should have font-bold (row header)
   const cells = html.match(/<td[^>]*>[^<]*/g) || [];
   assert.ok(cells.length >= 1);
-  assert.ok(cells[0].includes("font-bold"));
+  assert.ok(cells[0]?.includes("font-bold"));
 });
 
 test("table: renders badge-styled cell with rounded-full pill", () => {

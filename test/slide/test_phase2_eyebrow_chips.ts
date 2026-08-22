@@ -26,6 +26,7 @@ const baseTheme: SlideTheme = {
 
 test("schema: title slide parses without phase-2 fields (back-compat)", () => {
   const slide = slideLayoutSchema.parse({ layout: "title", title: "Hello" });
+  if (slide.layout !== "title") throw new Error("type guard");
   assert.equal(slide.eyebrow, undefined);
   assert.equal(slide.chips, undefined);
 });

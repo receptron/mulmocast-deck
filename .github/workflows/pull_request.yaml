@@ -29,5 +29,6 @@ jobs:
           cache: 'yarn'
       - run: yarn install --frozen-lockfile
       - run: yarn run lint
+      - run: yarn run typecheck
       - run: yarn run build
       - run: yarn run test
