@@ -8,8 +8,8 @@ export const layoutBigQuote = (data: BigQuoteSlide): string => {
   parts.push(`<div class="flex flex-col items-center justify-center h-full px-20">`);
   if (eyebrowHtml) parts.push(`  <div class="mb-6">${eyebrowHtml}</div>`);
   parts.push(`  ${accentBar(accent, "w-24 mb-8")}`);
-  parts.push(`  <blockquote class="text-[32px] text-d-text font-title italic text-center leading-relaxed"${dp("quote")}>`);
-  parts.push(`    &ldquo;${renderInlineMarkup(data.quote)}&rdquo;`);
+  parts.push(`  <blockquote class="text-[32px] text-d-text font-title italic text-center leading-relaxed">`);
+  parts.push(`    &ldquo;<span${dp("quote")}>${renderInlineMarkup(data.quote)}</span>&rdquo;`);
   parts.push(`  </blockquote>`);
   parts.push(`  ${accentBar(accent, "w-24 mt-8 mb-6")}`);
   if (data.author) {
