@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.0.1 — 2026-08-24
+
+### Fixed
+
+- **Editing a `bigQuote` slide multiplied its quotation marks** (#32, #33).
+  The `data-mulmo-path` marker sat on the `<blockquote>`, which also holds the decorative
+  `&ldquo;`/`&rdquo;`. An editor reads the marked element's `innerHTML` back into the value, so
+  every inline edit absorbed the decoration and the next render added another pair — one edit
+  showed `“Design is not just what it looks like”`, two showed `“    “Design is …”  ”`.
+
+  The marker now sits on an inner `<span>` and the decoration stays outside it. `<span>` is
+  inline, so the rendered slide is unchanged.
+
+### Added
+
+- **A marker contract test across all 13 layouts.** The pre-existing tests asserted only that a
+  `data-mulmo-path` was *present*, which cannot see decoration sitting next to it — that is what
+  let the bug above ship. Each marker's content must now be exactly `renderInlineMarkup(value)`.
+
+  All 13 layouts × 33 markers were round-tripped through "marker content → stored value": 32
+  already matched, `bigQuote.quote` was the only one that did not.
+
+### Changed
+
+- `test/` is type-checked in CI as well (#31).
+
+### Output
+
+`generateSlideHTML` emits different bytes for `bigQuote` only. Of the 1636 golden cases, exactly
+the 126 containing a `<blockquote>` changed; everything else is byte-identical.
+
 ## 2.0.0 — 2026-08-22
 
 ### Changed (breaking)
