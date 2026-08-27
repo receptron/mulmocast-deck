@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **`**bold**` and `{color:text}` silently lost their decoration across a newline** (#36).
+  `renderInlineMarkup` officially supports `\n` (it renders as `<br>`), but both patterns used
+  `.` — which does not match `\n` without the `s` flag — so `"**Principal\nSystem Architect**"`
+  rendered with the asterisks visible on the slide. No error, no warning: the only way to notice
+  was to look at the rendered deck.
+
+  Both now use `[\s\S]`, matching CommonMark, where strong emphasis may span a line break inside
+  a paragraph. Single-`*` emphasis is unchanged and still stays within one line — a lone `*` is
+  common in prose, so crossing lines would over-match.
+
+  Inputs that contain no `\n` render byte-identically: the old and new implementations were run
+  side by side over 205,018 newline-free inputs (150,778 random + an exhaustive sweep of every
+  combination of up to 4 markup tokens) with zero differences.
+
 ## 2.0.1 — 2026-08-24
 
 ### Fixed

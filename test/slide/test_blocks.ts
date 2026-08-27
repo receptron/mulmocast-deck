@@ -404,6 +404,40 @@ test("renderInlineMarkup: returns empty string for empty input", () => {
   assert.strictEqual(result, "");
 });
 
+// A newline is a legitimate input (it renders as <br>), so decorations must survive one. (#36)
+
+test("renderInlineMarkup: **bold** spans a newline", () => {
+  assert.strictEqual(renderInlineMarkup("**プリンシパル\nシステムアーキテクト**"), "<strong>プリンシパル<br>システムアーキテクト</strong>");
+});
+
+test("renderInlineMarkup: {color:text} spans a newline", () => {
+  assert.strictEqual(renderInlineMarkup("{primary:継続すること\nが大切}"), '<span class="text-d-primary">継続すること<br>が大切</span>');
+});
+
+test("renderInlineMarkup: a bare newline is still just <br>", () => {
+  assert.strictEqual(renderInlineMarkup("ふつうの\n改行"), "ふつうの<br>改行");
+});
+
+test("renderInlineMarkup: bold and color nest across a newline", () => {
+  assert.strictEqual(renderInlineMarkup("**{success:up\n5%}**"), '<strong><span class="text-d-success">up<br>5%</span></strong>');
+});
+
+test("renderInlineMarkup: an unknown color key across a newline stays literal", () => {
+  assert.strictEqual(renderInlineMarkup("{invalid:a\nb}"), "{invalid:a<br>b}");
+});
+
+test("renderInlineMarkup: adjacent bold runs pair line-by-line, not across the gap", () => {
+  assert.strictEqual(renderInlineMarkup("**a**\n**b**"), "<strong>a</strong><br><strong>b</strong>");
+});
+
+test("renderInlineMarkup: single-* emphasis stays within one line", () => {
+  assert.strictEqual(renderInlineMarkup("*a\nb*"), "*a<br>b*");
+  assert.strictEqual(
+    renderInlineMarkup("*a* and *b*"),
+    '<em class="text-d-warning not-italic font-bold">a</em> and <em class="text-d-warning not-italic font-bold">b</em>',
+  );
+});
+
 // ═══════════════════════════════════════════════════════════
 // nested bullets
 // ═══════════════════════════════════════════════════════════
