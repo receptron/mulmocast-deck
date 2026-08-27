@@ -273,6 +273,16 @@ In addition to `**bold**` and `{color:text}`, single-asterisk emphasis renders a
 
 `*` is treated as emphasis only at word boundaries — mid-word `a*b*c` (and `* spaced *`) are left as literal asterisks, so existing prose isn't accidentally parsed.
 
+`**bold**` and `{color:text}` may span a newline — the enclosed `\n` still renders as `<br>`:
+
+```ts
+{ type: "text", value: "**Principal\nSystem Architect**" }
+// → <strong>Principal<br>System Architect</strong>
+```
+
+Single-`*` emphasis is the exception and stays within one line: a lone `*` is common in prose
+(list markers, multiplication), so crossing lines would over-match.
+
 ### Slide density — compact (0.5.0)
 
 `density: "compact"` shrinks body / list text and tightens padding for slides with a lot of content. Approximates reveal.js' autofit, no JS required.

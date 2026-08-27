@@ -46,15 +46,19 @@ const inlineColorKeys = new Set(["primary", "accent", "success", "warning", "dan
  * {color:text} → <span class="text-d-color">...</span>
  *
  * Bold is parsed first; the single-asterisk pass only matches what's left, so "**x**" doesn't double-fire.
+ *
+ * `**bold**` and `{color:text}` may span a newline (CommonMark lets strong emphasis do the same);
+ * the enclosed `\n` still becomes `<br>`. Single-`*` emphasis stays within one line, because a lone
+ * `*` is common in prose (list markers, multiplication) and crossing lines would over-match.
  */
 export const renderInlineMarkup = (s: string): string => {
   let result = escapeHtml(s);
   // Bold MUST run before emphasis so **x** doesn't get eaten by the single-* pass.
-  result = result.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  result = result.replace(/\*\*([\s\S]+?)\*\*/g, "<strong>$1</strong>");
   // Single-* emphasis. The negative-lookbehind/lookahead keeps it from biting into surviving "**" inside <strong>.
   result = result.replace(/(?<![*\w])\*(?!\s)([^*\n]+?)(?<!\s)\*(?!\w)/g, '<em class="text-d-warning not-italic font-bold">$1</em>');
   // {color:text} → <span class="text-d-color">text</span>
-  result = result.replace(/\{([a-z]+):(.+?)\}/g, (_match, color: string, text: string) => {
+  result = result.replace(/\{([a-z]+):([\s\S]+?)\}/g, (_match, color: string, text: string) => {
     if (inlineColorKeys.has(color)) {
       return `<span class="text-${c(color)}">${text}</span>`;
     }
