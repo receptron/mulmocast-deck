@@ -72,6 +72,18 @@ test("fragment reports what the host must load rather than loading it", () => {
   assert.deepStrictEqual(frag(lightTheme, chartSlide).chartPlugins, ["https://cdn.jsdelivr.net/npm/chartjs-chart-sankey"]);
 });
 
+test("a chart type named after an Object.prototype member resolves no plugin", () => {
+  Object.getOwnPropertyNames(Object.prototype).forEach((chartType) => {
+    const proto = {
+      layout: "columns",
+      title: "C",
+      columns: [{ title: "A", content: [{ type: "chart", chartData: { type: chartType } }] }],
+    } as unknown as SlideLayout;
+    assert.deepStrictEqual(frag(lightTheme, proto).chartPlugins, [], chartType);
+    assert.ok(!generateSlideHTML(lightTheme, proto).includes("[native code]"), chartType);
+  });
+});
+
 test("fragment reports the mermaid theme its background needs, and only when needed", () => {
   assert.strictEqual(frag(lightTheme, mermaidSlide).mermaidTheme, "default");
   assert.strictEqual(frag(darkTheme, mermaidSlide).mermaidTheme, "dark");

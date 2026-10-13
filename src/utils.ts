@@ -324,11 +324,15 @@ export const resetSlideIdCounter = (): void => {
 // Content block type detection
 // ═══════════════════════════════════════════════════════════
 
-/** Chart.js plugin CDN URLs keyed by chart type */
-const CHART_PLUGIN_CDNS: Record<string, string> = {
-  sankey: "https://cdn.jsdelivr.net/npm/chartjs-chart-sankey",
-  treemap: "https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@3",
-};
+/**
+ * Chart.js plugin CDN URLs keyed by chart type. A Map rather than an object literal: the chart
+ * type comes from user data, and an object lookup resolves `constructor` or `__proto__` through
+ * the prototype chain and hands back a function.
+ */
+const CHART_PLUGIN_CDNS = new Map([
+  ["sankey", "https://cdn.jsdelivr.net/npm/chartjs-chart-sankey"],
+  ["treemap", "https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@3"],
+]);
 
 type BlockTypeFlags = { hasChart: boolean; hasMermaid: boolean; chartPlugins: string[] };
 
@@ -363,10 +367,9 @@ const collectContentArrays = (slide: SlideLayout): ContentBlock[][] => {
 /** Collect chart type from a chart block */
 const collectChartPlugin = (block: ContentBlock, plugins: Set<string>): void => {
   if (block.type === "chart") {
-    const chartType = block.chartData?.type as string | undefined;
-    if (chartType && CHART_PLUGIN_CDNS[chartType]) {
-      plugins.add(CHART_PLUGIN_CDNS[chartType]);
-    }
+    const chartType = block.chartData?.type;
+    const cdn = typeof chartType === "string" ? CHART_PLUGIN_CDNS.get(chartType) : undefined;
+    if (cdn) plugins.add(cdn);
   }
 };
 
