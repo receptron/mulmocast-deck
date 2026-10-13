@@ -47,11 +47,9 @@ export type SlideFragmentOptions = {
  * and giving the container a size — the fragment is `w-full h-full`, and the
  * layouts are designed at 1280px wide.
  *
- * **The markup is not sanitized.** A `SlideLayout` is user data, and the chart block
- * still carries the driver `<script>` the document needs, so a host that injects this
- * into its own page must sanitize first. That is why a chart's config also rides on
- * the canvas as `data-mulmo-chart`: it survives sanitizing, and the host drives the
- * chart from there instead of from a script that would not have run anyway.
+ * **The markup is not sanitized.** A `SlideLayout` is user data, so a host that injects this
+ * into its own page must sanitize first. A chart's config rides on the canvas as
+ * `data-mulmo-chart`, which survives sanitizing, and the host drives the chart from there.
  */
 export const generateSlideFragment = (theme: SlideTheme, slide: SlideLayout, options: SlideFragmentOptions = {}): SlideFragment => {
   // Allocated before the body so the scope class exists to write rules against. It comes
