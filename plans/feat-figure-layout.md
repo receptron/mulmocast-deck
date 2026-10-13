@@ -21,9 +21,10 @@ mermaid は素の大きさのまま。詳細は #39。
 
 - スキーマ: `figureSlideSchema` = `slideBaseFields` ＋ `title` ＋ `stepLabel?` ＋ `subtitle?` ＋
   `figure: chartBlockSchema | mermaidBlockSchema`（既存スキーマの再利用）
-- 描画: `slideHeader` の下に `mulmo-figure relative flex-1 min-h-0 flex flex-col` の枠を置き、
-  中身は `renderContentBlock` そのもの（chart / mermaid の markup を二重に持たない）
-  - 枠の余白は padding ではなく margin。mermaid を `inset:0` で枠に合わせるので、padding だと余白が消える
+- 描画: `slideHeader` の下に余白付きの外枠、その中にブロックの見出し（`blockTitle`）、その下に
+  `mulmo-figure relative flex-1 min-h-0 flex flex-col` の箱。箱の中身は見出しを外した `renderContentBlock`
+  （chart / mermaid の markup を二重に持たない）
+  - 見出しを箱の外に出すのは、mermaid を `inset:0` で箱に合わせるため。箱の中にあると図が見出しを覆う
 - mermaid の拡大: スコープ済み CSS を `buildSlideRuleSets` に足す（layout が figure のときだけ）。
   `generateSlideHTML` と `generateSlideFragment` の両方が同じルールを得る
   - `.mermaid` を枠いっぱいに絶対配置し、`svg` を `width/height:100%`。mermaid が svg に

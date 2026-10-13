@@ -58,6 +58,19 @@ test("figure layout: the block sits in the growing box under the header", () => 
   assert.ok(html.indexOf("data-mulmo-chart=") > box, "the canvas is inside the box");
 });
 
+test("figure layout: a block title sits above the box the diagram fills, not inside it", () => {
+  [
+    { type: "mermaid", title: "Block", code: "graph TD; A-->B" },
+    { type: "chart", title: "Block", chartData: { type: "bar" } },
+  ].forEach((figure) => {
+    const html = renderSlideContent(slideLayoutSchema.parse({ layout: "figure", title: "T", figure }));
+    const title = html.indexOf(">Block<");
+    const box = html.indexOf('class="mulmo-figure relative');
+    assert.ok(title > 0 && box > title, `${figure.type}: the title precedes the box`);
+    assert.strictEqual(html.split(">Block<").length - 1, 1, `${figure.type}: the title is drawn once`);
+  });
+});
+
 test("figure layout: the header carries title and subtitle markers", () => {
   const html = renderSlideContent(slideLayoutSchema.parse({ layout: "figure", title: "T", subtitle: "S", figure: { type: "mermaid", code: "x" } }));
   assert.ok(html.includes('data-mulmo-path="title"'));
