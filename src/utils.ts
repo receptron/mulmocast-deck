@@ -318,7 +318,8 @@ export const generateSlideId = (prefix: string): string => (scopedIds ? `${scope
 
 /**
  * Run `render` with ids taken from `scope` and a counter starting at zero, so the same slide
- * under the same scope renders the same ids — the shared counter advances on every render.
+ * under the same scope renders the same ids. The shared counter is left untouched; ids drawn
+ * from it differ on every render, which is what this exists to avoid.
  */
 export const withSlideIdScope = <T>(scope: string, render: () => T): T => {
   const outer = scopedIds;
