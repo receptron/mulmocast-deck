@@ -311,9 +311,24 @@ export const centeredSlideHeader = (data: SlideHeaderData): string => {
 // ═══════════════════════════════════════════════════════════
 
 let slideIdCounter = 0;
+let scopedIds: { scope: string; next: number } | undefined;
 
 /** Generate a unique ID with the given prefix (e.g. "chart-0", "mermaid-1") */
-export const generateSlideId = (prefix: string): string => `${prefix}-${slideIdCounter++}`;
+export const generateSlideId = (prefix: string): string => (scopedIds ? `${scopedIds.scope}-${prefix}-${scopedIds.next++}` : `${prefix}-${slideIdCounter++}`);
+
+/**
+ * Run `render` with ids taken from `scope` and a counter starting at zero, so the same slide
+ * under the same scope renders the same ids — the shared counter advances on every render.
+ */
+export const withSlideIdScope = <T>(scope: string, render: () => T): T => {
+  const outer = scopedIds;
+  scopedIds = { scope, next: 0 };
+  try {
+    return render();
+  } finally {
+    scopedIds = outer;
+  }
+};
 
 /** Reset the ID counter (for testing) */
 export const resetSlideIdCounter = (): void => {
