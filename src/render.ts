@@ -71,7 +71,17 @@ const buildCardGlassCss = (theme: SlideTheme, scope: string): string => {
 };
 
 /**
- * The four optional rule sets, in document order, with empties dropped.
+ * Figure slides: grow the diagram to the box `layoutFigure` gives it, keeping its aspect ratio.
+ * `!important` because mermaid writes `max-width` inline on the svg it generates.
+ */
+const buildFigureCss = (slide: SlideLayout, scope: string): string => {
+  if (slide.layout !== "figure") return "";
+  const s = `${scope ? `${scope} ` : ""}.mulmo-figure .mermaid`;
+  return `${s}{position:absolute;inset:0;display:flex;justify-content:center;align-items:center}${s} svg{width:100%;height:100%;max-width:100%!important}`;
+};
+
+/**
+ * The optional rule sets, in document order, with empties dropped.
  * `scope` confines every rule to one slide's subtree; pass "" for a standalone document.
  */
 export const buildSlideRuleSets = (theme: SlideTheme, slide: SlideLayout, scope: string): string[] =>
@@ -80,6 +90,7 @@ export const buildSlideRuleSets = (theme: SlideTheme, slide: SlideLayout, scope:
     buildDensityCss(slide, scope),
     buildCardGlassCss(theme, scope),
     slide.intro ? buildIntroCss(slide.intro, slide.staggerMs, scope) : "",
+    buildFigureCss(slide, scope),
   ].filter(Boolean);
 
 /**

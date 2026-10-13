@@ -554,6 +554,21 @@ export const manifestoSlideSchema = z.object({
   callout: calloutBarSchema.optional(),
 });
 
+// ─── figure ───
+/**
+ * One chart or mermaid diagram filling everything below the header. The other layouts nest
+ * blocks in containers that do not grow vertically, so a chart there collapses to Chart.js'
+ * 150px fallback and a diagram stays at its natural size.
+ */
+export const figureSlideSchema = z.object({
+  layout: z.literal("figure"),
+  ...slideBaseFields,
+  title: z.string(),
+  stepLabel: z.string().optional(),
+  subtitle: z.string().optional(),
+  figure: z.discriminatedUnion("type", [chartBlockSchema, mermaidBlockSchema]),
+});
+
 // ═══════════════════════════════════════════════════════════
 // Branding — logo & background image overlay
 // ═══════════════════════════════════════════════════════════
@@ -608,6 +623,7 @@ export const slideLayoutSchema = z.discriminatedUnion("layout", [
   funnelSlideSchema,
   waterfallSlideSchema,
   manifestoSlideSchema,
+  figureSlideSchema,
 ]);
 
 /** Media schema registered in mulmoImageAssetSchema */
@@ -670,6 +686,7 @@ export type WaterfallItem = z.infer<typeof waterfallItemSchema>;
 export type WaterfallSlide = z.infer<typeof waterfallSlideSchema>;
 export type ManifestoLine = z.infer<typeof manifestoLineSchema>;
 export type ManifestoSlide = z.infer<typeof manifestoSlideSchema>;
+export type FigureSlide = z.infer<typeof figureSlideSchema>;
 export type BulletIcon = z.infer<typeof bulletIconSchema>;
 export type TextSize = z.infer<typeof textSizeSchema>;
 export type SlideDensity = z.infer<typeof slideDensitySchema>;

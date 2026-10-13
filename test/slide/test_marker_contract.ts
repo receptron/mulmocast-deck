@@ -70,6 +70,7 @@ const cases: SlideLayout[] = (
     { layout: "waterfall", title: "T", items: [{ label: "w", value: 10 }] },
     { layout: "funnel", title: "T", stages: [{ label: "f", value: "1" }] },
     { layout: "manifesto", title: "T", items: [{ title: "m", description: "d" }] },
+    { layout: "figure", title: "T", subtitle: "S", figure: { type: "mermaid", code: "graph TD; A-->B" } },
   ] as unknown[]
 ).map((raw) => slideLayoutSchema.parse(raw));
 

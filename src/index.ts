@@ -72,6 +72,7 @@ export type {
   WaterfallItem,
   ManifestoSlide,
   ManifestoLine,
+  FigureSlide,
   // ─── shared bits ───
   Card,
   CalloutBar,
