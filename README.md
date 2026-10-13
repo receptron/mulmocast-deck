@@ -91,9 +91,20 @@ Nothing shared between slides is emitted per slide. The host is responsible for:
 
 ## Available layouts
 
-`title` · `bigQuote` · `columns` · `comparison` · `stats` · `table` · `timeline` · `matrix` · `grid` · `split` · `funnel` · `waterfall` · `manifesto`
+`title` · `bigQuote` · `columns` · `comparison` · `stats` · `table` · `timeline` · `matrix` · `grid` · `split` · `funnel` · `waterfall` · `manifesto` · `figure`
 
 Each layout has its own Zod schema under `slideLayoutSchema` (a discriminated union). See `src/schema.ts` for the full shape.
+
+### Figure — one chart or diagram filling the slide
+
+`figure` takes a single `chart` or `mermaid` block and gives it everything below the header. The other layouts nest blocks in boxes that do not grow vertically, so a chart there falls back to Chart.js' 150px height and a diagram stays at its natural size.
+
+```ts
+{ layout: "figure", title: "Quarterly Revenue", figure: { type: "chart", chartData: { type: "bar", data: { /* ... */ } } } }
+{ layout: "figure", title: "Request flow", subtitle: "v2", figure: { type: "mermaid", code: "graph TD; A-->B" } }
+```
+
+The diagram is scaled to fit with its aspect ratio kept. The rule that does it ships in the slide's own CSS — the `<style>` of `generateSlideHTML`, and `css` of `generateSlideFragment` — so a host needs nothing extra.
 
 ## Content blocks
 

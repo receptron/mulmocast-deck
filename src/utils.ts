@@ -356,6 +356,9 @@ const collectContentArrays = (slide: SlideLayout): ContentBlock[][] => {
     case "matrix":
       slide.cells.forEach((cell) => pushIfPresent(cell.content));
       break;
+    case "figure":
+      pushIfPresent([slide.figure]);
+      break;
   }
   return arrays;
 };
