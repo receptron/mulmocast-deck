@@ -87,6 +87,9 @@ Nothing shared between slides is emitted per slide. The host is responsible for:
    executed via `innerHTML` anyway.
 5. **A sized container.** The fragment is `w-full h-full`; the layouts are designed at 1280px wide.
 
+A host doing all five is running at the [MulmoScript playground](https://receptron.github.io/mulmocast-beat-editor/)
+— its "Layout showcase" script has one slide per layout, and you can paste your own script.
+
 `generateSlideHTML()` is unchanged and remains the right call for PNG / PDF / movie output.
 
 ## Available layouts
