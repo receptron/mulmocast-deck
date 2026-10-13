@@ -153,8 +153,34 @@ test("fragment body is the document body, modulo the scope class", () => {
     resetSlideIdCounter();
     const { html } = generateSlideFragment(t, s, { reference: "ref", scopeClass: "sc" });
     const docBody = doc.slice(doc.indexOf('<body class="h-full">\n') + '<body class="h-full">\n'.length, doc.indexOf("\n</body>"));
-    assert.strictEqual(html.replace('<div class="sc ', '<div class="'), docBody, `case ${i}`);
+    // A caller-chosen scope class also prefixes the chart / mermaid ids.
+    assert.strictEqual(html.replace('<div class="sc ', '<div class="').replaceAll('id="sc-', 'id="'), docBody, `case ${i}`);
   });
+});
+
+test("with a scope class, the same slide renders the same ids every time", () => {
+  [chartSlide, mermaidSlide].forEach((s) => {
+    const first = frag(lightTheme, s, "beat-3-slide").html;
+    assert.strictEqual(frag(lightTheme, s, "beat-3-slide").html, first, "a re-render must not move the ids");
+    assert.match(first, /id="beat-3-slide-(chart|mermaid)-0"/);
+  });
+});
+
+test("ids under different scope classes do not collide", () => {
+  const ids = (html: string) => [...html.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
+  const a = ids(frag(lightTheme, chartSlide, "beat-1-slide").html);
+  const b = ids(frag(lightTheme, chartSlide, "beat-2-slide").html);
+  assert.ok(a.length > 0);
+  assert.deepStrictEqual(
+    a.filter((id) => b.includes(id)),
+    [],
+  );
+});
+
+test("a scoped render leaves the shared counter where it was", () => {
+  resetSlideIdCounter();
+  frag(lightTheme, chartSlide, "x");
+  assert.match(generateSlideHTML(lightTheme, chartSlide), /id="chart-0"/, "the document path still starts at zero");
 });
 
 // ═══════════════════════════════════════════════════════════

@@ -1,7 +1,7 @@
 import type { SlideTheme, SlideLayout } from "./schema.js";
 import { buildSlide, isDarkBg, type ResolvedBranding } from "./render.js";
 import { buildThemeVars } from "./theme_css.js";
-import { detectBlockTypes, generateSlideId } from "./utils.js";
+import { detectBlockTypes, generateSlideId, withSlideIdScope } from "./utils.js";
 
 /** External runtimes a fragment needs the host to have loaded. */
 export type SlideRuntime = "chart" | "mermaid";
@@ -27,6 +27,8 @@ export type SlideFragmentOptions = {
   /**
    * Overrides the generated scope class. Pass one derived from your own data (a beat
    * index, a slide id) when the fragment has to survive a re-render with the same class.
+   * Chart and mermaid ids are then derived from it too (`${scopeClass}-chart-0`), so the
+   * same slide renders the same markup every time.
    */
   scopeClass?: string;
 };
@@ -56,7 +58,9 @@ export const generateSlideFragment = (theme: SlideTheme, slide: SlideLayout, opt
   // off the same counter as chart / mermaid ids, so `resetSlideIdCounter()` makes the
   // whole fragment reproducible.
   const scopeClass = options.scopeClass ?? generateSlideId("mulmo-slide");
-  const { body, ruleSets } = buildSlide(theme, slide, scopeClass, options.reference, options.branding);
+  const build = () => buildSlide(theme, slide, scopeClass, options.reference, options.branding);
+  // Only a caller-chosen class is stable across renders; a generated one changes anyway.
+  const { body, ruleSets } = options.scopeClass ? withSlideIdScope(scopeClass, build) : build();
   const { hasChart, hasMermaid, chartPlugins } = detectBlockTypes(slide);
 
   // Theme first: the custom properties have to be in scope for the rules that read them.
