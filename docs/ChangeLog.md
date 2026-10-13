@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.1.0 — 2026-10-13
+
+### Added
+
+- **`figure` layout — one chart or mermaid diagram filling the slide** (#39, #44).
+  `{ layout: "figure", title, figure: { type: "chart" | "mermaid", … } }` gives a single block
+  everything below the header. The existing layouts nest blocks in boxes that do not grow
+  vertically, so a lone chart fell back to Chart.js' 150px height and a diagram stayed at its
+  natural size. The diagram is scaled to fit with its aspect ratio kept, by a rule that ships in
+  the slide's own CSS (the `<style>` of `generateSlideHTML`, `css` of `generateSlideFragment`).
+  A block's own `title` is drawn above the box so the scaled diagram cannot cover it.
+  `FigureSlide` is exported. Other layouts render byte-identically.
+
+### Fixed
+
+- **A chart type named after an `Object.prototype` member put a function into `chartPlugins`**
+  (#40, #42). The plugin table was an object literal keyed by user data, so `constructor`,
+  `toString` or `__proto__` resolved through the prototype chain — `chartPlugins: string[]` held
+  a function and `generateSlideHTML` emitted `<script src="function Object() { [native code] }">`.
+  The table is now a `Map`, read only for string types. Real chart types resolve as before;
+  non-string types (arrays, objects) now resolve no plugin.
+- **`generateSlideFragment` ids changed on every render even with a fixed `scopeClass`**
+  (#41, #43). Chart and mermaid ids came off a module-wide counter, so re-rendering the same
+  slide produced different markup and a host diffing fragments re-injected it every time. With a
+  caller-chosen `scopeClass`, ids are now `${scopeClass}-chart-0`, counted from zero per render.
+  `generateSlideHTML`, and fragments without a `scopeClass`, keep the shared counter.
+
+### Changed
+
+- Dependency updates (#38).
+
 ## 2.0.2 — 2026-08-27
 
 ### Fixed
