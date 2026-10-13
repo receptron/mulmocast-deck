@@ -20,4 +20,7 @@ receptron/mulmocast-deck#40
 - `Object.prototype` のメンバ名 → 旧: 関数・オブジェクトを返す / 新: プラグインなし
 - 配列の type（`["sankey"]`）→ 旧: 文字列化されてヒット / 新: プラグインなし（Chart.js も配列の type は受け付けない）
 
+これは JSON で表せる入力についての主張。プログラムから `toString` / `Symbol.toPrimitive` を持つオブジェクトを
+type に渡した場合も、旧: 文字列化されてヒット / 新: プラグインなし、に変わる（有効な chart type ではない）。
+
 既存出力の golden（`test_render_golden.ts`）は更新せずに緑。
